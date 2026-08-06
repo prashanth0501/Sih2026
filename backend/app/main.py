@@ -33,17 +33,18 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(title=settings.app_name, lifespan=lifespan)
 
-# Production Security Middleware
-app.add_middleware(SecurityHeadersMiddleware)
-
-# CORS Configuration
+# CORS Configuration (Configured first to handle OPTIONS preflight cleanly)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.cors_origins,
+    allow_origin_regex=r"https://.*\.pages\.dev",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Production Security Headers Middleware
+app.add_middleware(SecurityHeadersMiddleware)
 
 
 @app.exception_handler(Exception)

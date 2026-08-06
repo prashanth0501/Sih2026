@@ -18,7 +18,6 @@ class Settings(BaseSettings):
 
     cors_origins: list[str] = [
         "https://sih2026.pages.dev",
-        "https://*.pages.dev",
         "http://localhost:5173",
         "http://localhost:3000",
     ]
