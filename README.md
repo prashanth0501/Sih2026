@@ -10,6 +10,7 @@ Detailed docs live in [`docs/`](docs/):
 
 | Doc | Covers |
 |---|---|
+| [`RUN_LOCALLY.md`](RUN_LOCALLY.md) | Step-by-step local setup, backend & frontend start commands, test credentials |
 | [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) | System overview, tech stack, data flow, roles |
 | [`docs/FRONTEND.md`](docs/FRONTEND.md) | Route table, component structure, mock-vs-real data |
 | [`docs/BACKEND.md`](docs/BACKEND.md) | FastAPI structure, auth, the screening state machine |
