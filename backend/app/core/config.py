@@ -16,7 +16,12 @@ class Settings(BaseSettings):
     jwt_algorithm: str = "HS256"
     access_token_expire_minutes: int = 60 * 12
 
-    cors_origins: list[str] = ["http://localhost:5173"]
+    cors_origins: list[str] = [
+        "https://sih2026.pages.dev",
+        "https://*.pages.dev",
+        "http://localhost:5173",
+        "http://localhost:3000",
+    ]
 
     mongodb_uri: str = ""
     mongodb_db_name: str = "ignite_sih"

@@ -1,6 +1,7 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Request, status
 
 from app.core.deps import get_current_user
+from app.core.rate_limit import limiter_auth
 from app.core.security import create_access_token, hash_password, verify_password
 from app.db import mongo
 from app.models.user import TokenResponse, UserLogin, UserPublic, UserRegister
@@ -21,7 +22,9 @@ def _to_public(user: dict) -> UserPublic:
 
 
 @router.post("/register", response_model=TokenResponse)
-async def register(body: UserRegister):
+async def register(request: Request, body: UserRegister):
+    await limiter_auth.check(request)
+
     existing = await mongo.find_user_by_email(body.email)
     if existing:
         raise HTTPException(status.HTTP_409_CONFLICT, "An account with this email already exists")
@@ -48,7 +51,9 @@ async def register(body: UserRegister):
 
 
 @router.post("/login", response_model=TokenResponse)
-async def login(body: UserLogin):
+async def login(request: Request, body: UserLogin):
+    await limiter_auth.check(request)
+
     user = await mongo.find_user_by_email(body.email)
     if not user or not verify_password(body.password, user["password_hash"]):
         raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Incorrect email or password")

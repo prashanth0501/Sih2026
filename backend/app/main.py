@@ -1,9 +1,11 @@
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request, status
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 
 from app.core.config import settings
+from app.core.middleware import SecurityHeadersMiddleware
 from app.db import mongo
 from app.routers import (
     announcements,
@@ -31,6 +33,10 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(title=settings.app_name, lifespan=lifespan)
 
+# Production Security Middleware
+app.add_middleware(SecurityHeadersMiddleware)
+
+# CORS Configuration
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.cors_origins,
@@ -38,6 +44,17 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+@app.exception_handler(Exception)
+async def global_exception_handler(request: Request, exc: Exception):
+    """Production exception handler preventing internal traceback leaks."""
+    print(f"Unhandled error handling {request.method} {request.url.path}: {exc}")
+    return JSONResponse(
+        status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        content={"detail": "An internal error occurred. Please try again later."},
+    )
+
 
 app.include_router(auth.router)
 app.include_router(teams.router)
@@ -52,4 +69,4 @@ app.include_router(promotions.router)
 
 @app.get("/")
 def root():
-    return {"name": settings.app_name, "docs": "/docs"}
+    return {"name": settings.app_name, "docs": "/docs", "status": "online"}

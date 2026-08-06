@@ -63,6 +63,9 @@ async def my_team(user: dict = Depends(get_current_user)):
     raise HTTPException(status.HTTP_404_NOT_FOUND, "You're not on a team yet")
 
 
+import re
+
+
 @router.get("", response_model=list[TeamPublic])
 async def list_teams(
     status_filter: str | None = Query(None, alias="status"),
@@ -75,7 +78,7 @@ async def list_teams(
     if status_filter:
         query["status"] = status_filter
     if q:
-        query["name"] = {"$regex": q, "$options": "i"}
+        query["name"] = {"$regex": re.escape(q), "$options": "i"}
 
     start = (page - 1) * page_size
     cursor = mongo.teams.find(query).skip(start).limit(page_size)

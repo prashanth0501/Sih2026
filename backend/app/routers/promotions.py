@@ -1,8 +1,9 @@
 from urllib.parse import urlparse
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Request, status
 
 from app.core.deps import require_role
+from app.core.rate_limit import limiter_write
 from app.db import mongo
 from app.models.promotion import PromoPostCreate, PromoPostPublic, PromoShareCreate, PromoSharePublic
 

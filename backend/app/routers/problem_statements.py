@@ -7,15 +7,19 @@ from app.models.content import ProblemStatement
 router = APIRouter(prefix="/api/v1/problem-statements", tags=["problem-statements"])
 
 
+import re
+
+
 @router.get("", response_model=list[ProblemStatement])
 async def list_problem_statements(q: str | None = None, theme: str | None = None):
     query = {}
     if theme:
         query["theme"] = theme
     if q:
+        escaped_q = re.escape(q)
         query["$or"] = [
-            {"title": {"$regex": q, "$options": "i"}},
-            {"description": {"$regex": q, "$options": "i"}},
+            {"title": {"$regex": escaped_q, "$options": "i"}},
+            {"description": {"$regex": escaped_q, "$options": "i"}},
         ]
     cursor = mongo.problem_statements.find(query)
     return await cursor.to_list(length=None)

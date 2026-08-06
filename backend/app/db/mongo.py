@@ -41,8 +41,12 @@ promo_posts = db["promo_posts"]
 promo_shares = db["promo_shares"]
 
 
+import re
+
+
 async def find_user_by_email(email: str) -> dict | None:
-    return await users.find_one({"email": {"$regex": f"^{email}$", "$options": "i"}})
+    escaped_email = re.escape(email.strip())
+    return await users.find_one({"email": {"$regex": f"^{escaped_email}$", "$options": "i"}})
 
 
 async def ensure_member_login(name: str, email: str, department: str, year: int) -> dict:
