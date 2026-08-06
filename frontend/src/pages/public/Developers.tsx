@@ -7,7 +7,7 @@ const iconBtn =
 
 export function Developers() {
   return (
-    <div className="mx-auto max-w-[960px] px-5 pb-28 pt-32 sm:px-8">
+    <div className="mx-auto max-w-[960px] px-5 pb-16 pt-6 sm:pt-8">
       <Reveal>
         <div className="text-center">
           <div className="eyebrow mb-5">Behind the portal</div>

@@ -4,7 +4,7 @@ import { PEOPLE } from '@/lib/data';
 
 export function People() {
   return (
-    <div className="mx-auto max-w-[900px] px-5 pb-28 pt-32 sm:px-8">
+    <div className="mx-auto max-w-[900px] px-5 pb-16 pt-6 sm:pt-8">
       <Reveal>
         <div className="eyebrow mb-5">From the Principal's desk</div>
         <div className="grid gap-8 sm:grid-cols-[300px_1fr] sm:items-start">

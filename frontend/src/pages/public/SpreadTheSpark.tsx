@@ -23,7 +23,7 @@ function SubmitLinkForm({ postId }: { postId: string }) {
       const res = await submitPromoShare(postId, form);
       setResult({ count: res.count_for_post });
     } catch {
-      setError("Couldn't submit that — try again.");
+      setError('Submission failed. Please check your network and try again.');
     }
   }
 
@@ -31,57 +31,71 @@ function SubmitLinkForm({ postId }: { postId: string }) {
     return (
       <button
         onClick={() => setOpen(true)}
-        className="mono mt-4 rounded-full border border-line px-3.5 py-2 text-[0.66rem] hover:border-marigold hover:text-marigold"
+        className="mono mt-4 rounded-full bg-paper border border-line px-5 py-2.5 text-xs font-bold text-ink hover:border-marigold hover:text-marigold transition-all hover:scale-105 cursor-pointer"
       >
-        I posted this — submit your link
+        Posted this on your social media? Submit your link for credit
       </button>
     );
   }
 
   if (result) {
     return (
-      <div className="mt-4 border-t border-line pt-4">
-        <p className="text-[0.9rem] font-bold text-marigold">🎉 You're #{result.count} to share this one.</p>
-        <p className="mt-1 text-[0.82rem] text-ink-soft">Thanks for spreading the spark — no login needed, you're already credited.</p>
+      <div className="mt-4 rounded-2xl border border-marigold/40 bg-marigold/10 p-5 space-y-1 text-center sm:text-left">
+        <p className="text-sm font-bold text-marigold font-display">You are Advocate #{result.count} to share this post!</p>
+        <p className="text-xs text-ink-soft">Your submission has been verified and added to the official NCET Spark Wall.</p>
       </div>
     );
   }
 
   return (
-    <form onSubmit={handleSubmit} className="mt-4 grid gap-3 border-t border-line pt-4">
+    <form onSubmit={handleSubmit} className="mt-4 space-y-4 border-t border-line/60 pt-4">
+      <div className="mono text-xs font-bold text-marigold uppercase tracking-wider">
+        Submit Your Social Media Post Link
+      </div>
+
       <div className="grid gap-3 sm:grid-cols-2">
         <input
           required
           placeholder="Your full name"
           value={form.name}
           onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
-          className="border border-line bg-paper px-3.5 py-2.5 text-[0.85rem] outline-none focus-visible:border-marigold"
+          className="rounded-xl border border-line bg-paper px-4 py-3 text-sm text-ink outline-none focus-visible:border-marigold"
         />
         <input
           required
-          placeholder="USN"
+          placeholder="USN (e.g. 1NC23CS001)"
           value={form.usn}
           onChange={(e) => setForm((f) => ({ ...f, usn: e.target.value.toUpperCase() }))}
-          className="border border-line bg-paper px-3.5 py-2.5 text-[0.85rem] outline-none focus-visible:border-marigold"
+          className="rounded-xl border border-line bg-paper px-4 py-3 text-sm text-ink outline-none focus-visible:border-marigold"
         />
       </div>
+
       <input
         required
         type="url"
-        placeholder="Paste your Instagram / LinkedIn / Facebook post URL"
+        placeholder="Paste your Instagram / LinkedIn / Facebook / X post URL"
         value={form.post_url}
         onChange={(e) => setForm((f) => ({ ...f, post_url: e.target.value }))}
-        className="border border-line bg-paper px-3.5 py-2.5 text-[0.85rem] outline-none focus-visible:border-marigold"
+        className="w-full rounded-xl border border-line bg-paper px-4 py-3 text-sm text-ink outline-none focus-visible:border-marigold"
       />
-      <div className="flex items-center justify-between gap-3">
-        <span className="mono text-[0.64rem] text-ink-soft">
-          {platform ? <>Detected: <span className="text-marigold">{platform}</span></> : 'Paste a link to detect the platform'}
+
+      <div className="flex flex-wrap items-center justify-between gap-3 pt-1">
+        <span className="mono text-xs text-ink-soft">
+          {platform ? (
+            <>
+              Platform Detected: <span className="font-bold text-marigold">{platform}</span>
+            </>
+          ) : (
+            'Paste your post URL to auto-detect platform'
+          )}
         </span>
-        <Button type="submit" variant="primary" className="px-5 py-2.5 text-[0.66rem]">
-          Submit →
+
+        <Button type="submit" variant="primary" className="rounded-full px-6 py-2.5 text-xs font-bold mono">
+          Submit Link
         </Button>
       </div>
-      {error && <p className="text-[0.8rem] text-red-700">{error}</p>}
+
+      {error && <p className="text-xs font-bold text-red-600">{error}</p>}
     </form>
   );
 }
@@ -101,67 +115,85 @@ function PromoCard({ post }: { post: ApiPromoPost }) {
     try {
       await navigator.share({ title: post.title, text });
     } catch {
-      // user cancelled — nothing to do
+      // User cancelled share
     }
   }
 
   const encoded = encodeURIComponent(text);
 
   return (
-    <div className="border border-line bg-paper-2 p-6">
-      <div className="flex items-start justify-between gap-3">
-        <h3 className="text-[1.05rem] font-bold">{post.title}</h3>
+    <div className="rounded-3xl border border-line bg-paper-2 p-6 sm:p-8 shadow-sm transition-all duration-300 hover:shadow-lg space-y-4">
+      {/* Card Header */}
+      <div className="flex items-start justify-between gap-3 border-b border-line/60 pb-3">
+        <h3 className="font-display text-xl sm:text-2xl font-bold text-ink">
+          {post.title}
+        </h3>
         {post.share_count > 0 && (
-          <span className="mono shrink-0 rounded-full bg-marigold/10 px-3 py-1 text-[0.62rem] text-marigold">
-            {post.share_count} {post.share_count === 1 ? 'share' : 'shares'}
+          <span className="mono shrink-0 rounded-full bg-marigold/15 border border-marigold/30 px-3.5 py-1 text-xs font-bold text-marigold">
+            {post.share_count} {post.share_count === 1 ? 'Share' : 'Shares'}
           </span>
         )}
       </div>
-      <p className="mt-2.5 whitespace-pre-line text-[0.9rem] text-ink-soft">{post.caption}</p>
-      <div className="mono mt-3 flex flex-wrap gap-2 text-[0.62rem] text-marigold">
+
+      {/* Caption Content */}
+      <p className="whitespace-pre-line text-sm sm:text-base text-ink-soft leading-relaxed">
+        {post.caption}
+      </p>
+
+      {/* Hashtags Strip */}
+      <div className="mono flex flex-wrap gap-2 text-xs font-bold text-marigold">
         {post.hashtags.map((h) => (
-          <span key={h}>{h}</span>
+          <span key={h} className="bg-marigold/10 rounded-md px-2.5 py-0.5">
+            {h}
+          </span>
         ))}
       </div>
 
-      <div className="mono mt-5 flex flex-wrap gap-2 text-[0.66rem]">
-        <button onClick={copyCaption} className="rounded-full border border-line px-3.5 py-2 hover:border-marigold hover:text-marigold">
-          {copied ? 'Copied ✓' : 'Copy caption'}
+      {/* Share Buttons */}
+      <div className="mono pt-3 border-t border-line/60 flex flex-wrap gap-2 text-xs">
+        <button
+          onClick={copyCaption}
+          className="rounded-full border border-line bg-paper px-4 py-2 font-bold text-ink hover:border-marigold hover:text-marigold transition-all hover:scale-105 cursor-pointer"
+        >
+          {copied ? 'Caption Copied ✓' : 'Copy Caption'}
         </button>
+
         {canNativeShare && (
-          <button onClick={nativeShare} className="rounded-full border border-line px-3.5 py-2 hover:border-marigold hover:text-marigold">
-            Share…
+          <button
+            onClick={nativeShare}
+            className="rounded-full border border-line bg-paper px-4 py-2 font-bold text-ink hover:border-marigold hover:text-marigold transition-all hover:scale-105 cursor-pointer"
+          >
+            Native Share
           </button>
         )}
+
         <a
           href={`https://wa.me/?text=${encoded}`}
           target="_blank"
           rel="noopener noreferrer"
-          className="rounded-full border border-line px-3.5 py-2 hover:border-marigold hover:text-marigold"
+          className="rounded-full border border-line bg-paper px-4 py-2 font-bold text-ink hover:border-marigold hover:text-marigold transition-all hover:scale-105"
         >
           WhatsApp
         </a>
+
         <a
           href={`https://twitter.com/intent/tweet?text=${encoded}`}
           target="_blank"
           rel="noopener noreferrer"
-          className="rounded-full border border-line px-3.5 py-2 hover:border-marigold hover:text-marigold"
+          className="rounded-full border border-line bg-paper px-4 py-2 font-bold text-ink hover:border-marigold hover:text-marigold transition-all hover:scale-105"
         >
-          X
+          X (Twitter)
         </a>
+
         <a
           href={`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent('https://sih.gov.in')}`}
           target="_blank"
           rel="noopener noreferrer"
-          className="rounded-full border border-line px-3.5 py-2 hover:border-marigold hover:text-marigold"
+          className="rounded-full border border-line bg-paper px-4 py-2 font-bold text-ink hover:border-marigold hover:text-marigold transition-all hover:scale-105"
         >
           LinkedIn
         </a>
       </div>
-      <p className="mono mt-3 text-[0.58rem] text-ink-soft/60">
-        Posting on Instagram? Copy the caption above, save the asset, and post it from the app — Instagram
-        doesn't support pre-filled web posting.
-      </p>
 
       <SubmitLinkForm postId={post.id} />
     </div>
@@ -173,44 +205,73 @@ export function SpreadTheSpark() {
   const { data: wall } = useQuery({ queryKey: ['promo-wall'], queryFn: getPromoWall });
 
   return (
-    <div className="mx-auto max-w-[900px] px-5 pb-28 pt-32 sm:px-8">
+    <div className="mx-auto max-w-[960px] px-4 sm:px-8 pb-24 pt-6 sm:pt-8 space-y-12">
+      
+      {/* 1. Centered Header Block */}
       <Reveal>
-        <div className="text-center">
-          <div className="eyebrow mb-5">Spread the Spark</div>
-          <h1 className="mx-auto max-w-[20ch] text-[clamp(2rem,5vw,3rem)]">Post it as your own. Get credit for it.</h1>
-          <p className="lede mx-auto mt-5 max-w-[65ch]">
-            Coordinators post ready-to-share content here. Copy the caption, share it on your own social
-            media, then submit the link — no login needed, just your name and USN. It auto-detects the
-            platform and counts toward the total right away.
+        <div className="text-center flex flex-col items-center justify-center mx-auto max-w-3xl space-y-4">
+          <div className="eyebrow">
+            Campus Innovation Campaign
+          </div>
+
+          <h1 className="font-display text-3xl sm:text-6xl font-bold tracking-tight text-ink leading-tight text-center">
+            Spread the Spark Campaign
+          </h1>
+
+          <p className="lede mx-auto text-base sm:text-xl text-ink-soft max-w-2xl text-center">
+            Amplify Smart India Hackathon 2026 across Nagarjuna College. Share ready-to-use posts on social media, submit your post link, and earn recognition on the official Spark Wall.
           </p>
         </div>
       </Reveal>
 
-      <div className="mt-12 grid gap-5">
-        {isLoading && <p className="text-center text-ink-soft">Loading…</p>}
+      {/* 2. Promotional Posts List */}
+      <div className="space-y-6">
+        {isLoading && (
+          <div className="rounded-3xl border border-line bg-paper-2 p-10 text-center text-ink-soft mono text-sm">
+            Loading ready-to-share promo posts...
+          </div>
+        )}
+
         {posts?.map((post, i) => (
-          <Reveal key={post.id} delay={i * 0.06}>
+          <Reveal key={post.id} delay={Math.min(i * 0.05, 0.2)}>
             <PromoCard post={post} />
           </Reveal>
         ))}
       </div>
 
+      {/* 3. The Spark Wall of Advocates */}
       {wall && wall.length > 0 && (
-        <Reveal delay={0.2}>
-          <div className="mt-16 border-t border-line pt-10">
-            <div className="eyebrow text-left text-[0.85rem]">The Spark Wall</div>
-            <h2 className="mt-3 text-[1.2rem] font-bold">Everyone who's spread it so far</h2>
-            <div className="mt-5 grid gap-2 sm:grid-cols-2">
+        <Reveal delay={0.15}>
+          <div className="rounded-3xl border border-line bg-paper p-6 sm:p-10 shadow-sm space-y-6">
+            <div className="text-center space-y-1">
+              <div className="mono text-xs font-bold text-marigold uppercase tracking-wider">
+                Community Advocates
+              </div>
+              <h2 className="font-display text-2xl sm:text-3xl font-bold text-ink">
+                The Spark Wall of Advocates
+              </h2>
+              <p className="text-sm text-ink-soft">
+                NCET students and coordinators who have amplified SIH 2026 across social media.
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
               {wall.map((w) => (
-                <div key={w.id} className="flex items-center justify-between gap-3 border border-line bg-paper-2 px-4 py-3">
-                  <span className="font-medium">{w.name}</span>
-                  <span className="mono text-[0.62rem] text-marigold">{w.platform}</span>
+                <div
+                  key={w.id}
+                  className="flex items-center justify-between gap-3 rounded-2xl border border-line bg-paper-2 px-5 py-3.5 shadow-xs"
+                >
+                  <span className="font-bold text-ink text-sm sm:text-base">{w.name}</span>
+                  <span className="mono text-xs font-bold text-marigold bg-marigold/10 rounded-md px-3 py-1 border border-marigold/20">
+                    {w.platform}
+                  </span>
                 </div>
               ))}
             </div>
           </div>
         </Reveal>
       )}
+
     </div>
   );
 }

@@ -26,12 +26,12 @@ def now_iso() -> str:
 
 DEFAULT_MEMBER_PASSWORD = "tm@123"
 
-# Initialize Motor Client with high-performance connection pooling
+# Initialize Motor Client with high-performance connection pooling for 100+ concurrent users
 uri = settings.mongodb_uri or "mongodb://localhost:27017"
 client = AsyncIOMotorClient(
     uri,
-    maxPoolSize=50,
-    minPoolSize=5,
+    maxPoolSize=200,
+    minPoolSize=20,
     maxIdleTimeMS=45000,
     connectTimeoutMS=10000,
     serverSelectionTimeoutMS=10000,

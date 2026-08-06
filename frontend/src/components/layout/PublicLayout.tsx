@@ -3,7 +3,7 @@ import { Outlet } from 'react-router-dom';
 import { NavBar } from './NavBar';
 import { Footer } from './Footer';
 import { MarginRail } from './MarginRail';
-import { SparkThread } from '@/components/SparkThread';
+import { CallToAction } from './CallToAction';
 import { cn } from '@/lib/utils';
 
 export function PublicLayout() {
@@ -14,20 +14,21 @@ export function PublicLayout() {
       <div className="grain" />
       <div className="lattice" />
       <MarginRail />
-      <SparkThread />
       <NavBar sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} />
-      
+
       {/* Main Content Area — dynamically adjusts layout margin when sidebar is docked open */}
       <main
         className={cn(
-          'relative z-[3] flex-1 pt-20 transition-all duration-300',
-          sidebarOpen && 'lg:pl-72'
+          'relative z-[3] flex-1 pt-16 transition-all duration-300',
+          sidebarOpen && 'lg:pl-80'
         )}
       >
         <Outlet />
       </main>
 
-      <div className={cn('transition-all duration-300', sidebarOpen && 'lg:pl-72')}>
+      {/* Global Call To Action Banner on every public page + Footer */}
+      <div className={cn('mt-auto shrink-0 relative z-[3] transition-all duration-300', sidebarOpen && 'lg:pl-80')}>
+        <CallToAction />
         <Footer />
       </div>
     </div>

@@ -14,14 +14,16 @@ export function ProblemStatements() {
   }, [query]);
 
   return (
-    <div className="mx-auto max-w-[1180px] px-5 pb-24 pt-32 sm:px-8">
+    <div className="mx-auto max-w-[1180px] px-5 pb-16 pt-6 sm:pt-8">
       <Reveal>
-        <div className="eyebrow mb-5">Problem Statements</div>
-        <h1 className="max-w-[16ch] text-[clamp(2.2rem,5vw,3.4rem)]">Eighteen themes. One search box.</h1>
-        <p className="lede mt-5 max-w-[65ch]">
-          These are the same themes used across national SIH. Search or just scroll — find the one your team
-          actually wants to spend two months solving.
-        </p>
+        <div className="text-center flex flex-col items-center justify-center mx-auto max-w-3xl space-y-3">
+          <div className="eyebrow">Problem Statements</div>
+          <h1 className="text-3xl sm:text-5xl font-bold tracking-tight text-ink text-center">Eighteen themes. One search box.</h1>
+          <p className="lede text-center mx-auto max-w-2xl">
+            These are the same themes used across national SIH. Search or just scroll — find the one your team
+            actually wants to spend two months solving.
+          </p>
+        </div>
       </Reveal>
 
       <div className="sticky top-20 z-10 mt-10">
@@ -30,14 +32,14 @@ export function ProblemStatements() {
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           placeholder="Search themes — try “health” or “energy”"
-          className="w-full max-w-md border border-line bg-paper px-5 py-3.5 text-[0.95rem] outline-none placeholder:text-ink-soft/60 focus-visible:border-marigold"
+          className="w-full max-w-md rounded-xl border border-line bg-paper px-5 py-3.5 text-[0.95rem] outline-none placeholder:text-ink-soft/60 focus-visible:border-marigold"
         />
       </div>
 
       <div className="mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
         {filtered.map((theme, i) => (
           <Reveal key={theme.name} delay={Math.min(i * 0.03, 0.3)}>
-            <div className="group h-full overflow-hidden border border-line bg-paper-2 transition-colors hover:border-marigold">
+            <div className="group h-full overflow-hidden rounded-2xl border border-line bg-paper-2 transition-colors hover:border-marigold">
               <div className="relative aspect-[16/10] overflow-hidden">
                 <img
                   src={theme.image}

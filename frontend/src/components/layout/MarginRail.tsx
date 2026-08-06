@@ -1,10 +1,10 @@
 const SHAPES = [
   { side: 'left', top: '14%', kind: 'rings' },
   { side: 'right', top: '26%', kind: 'diamond' },
-  { side: 'left', top: '44%', kind: 'dots' },
-  { side: 'right', top: '58%', kind: 'arc' },
-  { side: 'left', top: '72%', kind: 'plus' },
-  { side: 'right', top: '86%', kind: 'rings' },
+  { side: 'left', top: '42%', kind: 'dots' },
+  { side: 'right', top: '54%', kind: 'arc' },
+  { side: 'left', top: '66%', kind: 'plus' },
+  { side: 'right', top: '78%', kind: 'rings' },
 ] as const;
 
 function RingsShape() {

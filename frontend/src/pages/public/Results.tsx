@@ -8,14 +8,16 @@ export function Results() {
   const [tab, setTab] = useState<(typeof TABS)[number]>(TABS[0]);
 
   return (
-    <div className="mx-auto max-w-[900px] px-5 pb-28 pt-32 sm:px-8">
+    <div className="mx-auto max-w-[900px] px-5 pb-16 pt-6 sm:pt-8">
       <Reveal>
-        <div className="eyebrow mb-5">Results</div>
-        <h1 className="text-[clamp(2rem,5vw,3rem)]">How far did the sparks travel?</h1>
-        <p className="lede mt-5 max-w-[65ch]">
-          Every team's journey, from registration to the national stage. This page fills in as screening
-          happens — nothing to show yet.
-        </p>
+        <div className="text-center flex flex-col items-center justify-center mx-auto max-w-3xl space-y-3">
+          <div className="eyebrow">Results</div>
+          <h1 className="text-3xl sm:text-5xl font-bold tracking-tight text-ink text-center">How far did the sparks travel?</h1>
+          <p className="lede text-center mx-auto max-w-2xl">
+            Every team's journey, from registration to the national stage. This page fills in as screening
+            happens — nothing to show yet.
+          </p>
+        </div>
       </Reveal>
 
       <div className="mt-10 flex gap-2 border-b border-line">

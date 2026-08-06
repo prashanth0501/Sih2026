@@ -157,14 +157,14 @@ function PhotoGrid({ photos }: { photos: Photo[] }) {
 
 export function Gallery() {
   return (
-    <div className="mx-auto max-w-[1180px] px-5 pb-28 pt-32 sm:px-8">
+    <div className="mx-auto max-w-[1180px] px-5 pb-16 pt-6 sm:pt-8">
       <Reveal>
-        <div className="text-center">
-          <div className="eyebrow mb-5 flex justify-center">Nodal Centre · SIH 2025</div>
-          <h1 className="mx-auto max-w-[22ch] text-[clamp(2.2rem,5vw,3.4rem)]">
+        <div className="text-center flex flex-col items-center justify-center mx-auto max-w-3xl space-y-3">
+          <div className="eyebrow">Nodal Centre · SIH 2025</div>
+          <h1 className="text-3xl sm:text-5xl font-bold tracking-tight text-ink text-center">
             We didn't just send a team. We hosted the floor.
           </h1>
-          <p className="lede mx-auto mt-5 max-w-[65ch]">
+          <p className="lede text-center mx-auto max-w-2xl">
             In 2025, Nagarjuna College of Engineering &amp; Technology was chosen as an official Nodal Centre
             for Smart India Hackathon — opening our doors to teams, judges, and dignitaries from across the
             region. Here's what that day actually looked like.

@@ -11,21 +11,75 @@ const PEOPLE_TO_CONTACT = [
 
 export function Contact() {
   const [sent, setSent] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [form, setForm] = useState({ name: '', email: '', message: '' });
+  const [error, setError] = useState('');
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    if (!form.name || !form.email || !form.message) return;
+
+    setLoading(true);
+    setError('');
+
+    try {
+      // 1. Send background email via Web3Forms directly to parthshankar21@gmail.com
+      const res = await fetch('https://api.web3forms.com/submit', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Accept: 'application/json',
+        },
+        body: JSON.stringify({
+          access_key: 'b8478426-3023-42e1-a0d3-305f2c416e78', // Public Web3Forms API Endpoint
+          name: form.name,
+          email: form.email,
+          message: form.message,
+          subject: `SIH 2026 Portal Inquiry from ${form.name}`,
+          from_name: 'NCET SIH 2026 Portal',
+        }),
+      });
+
+      const data = await res.json();
+
+      if (data.success) {
+        setSent(true);
+      } else {
+        // Fallback to mailto if web form service is unreachable
+        triggerMailtoFallback();
+      }
+    } catch {
+      triggerMailtoFallback();
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  function triggerMailtoFallback() {
+    const subject = encodeURIComponent(`SIH 2026 Inquiry from ${form.name}`);
+    const body = encodeURIComponent(
+      `Name: ${form.name}\nEmail: ${form.email}\n\nMessage:\n${form.message}`
+    );
+    window.location.href = `mailto:parthshankar21@gmail.com?subject=${subject}&body=${body}`;
+    setSent(true);
+  }
 
   return (
     <div>
-      <div className="mx-auto max-w-[960px] px-5 pt-32 sm:px-8">
+      <div className="mx-auto max-w-[960px] px-5 pt-6 sm:pt-8 sm:px-8">
         <Reveal>
-          <div className="text-center">
-            <div className="eyebrow mb-5">Contact</div>
-            <h1 className="mx-auto text-[clamp(2rem,5vw,3rem)]">Talk to a real person.</h1>
-            <p className="lede mx-auto mt-5 max-w-[60ch]">
+          <div className="text-center flex flex-col items-center justify-center mx-auto max-w-2xl space-y-3">
+            <div className="eyebrow">Contact</div>
+            <h1 className="text-3xl sm:text-5xl font-bold tracking-tight text-ink text-center">
+              Talk to a real person.
+            </h1>
+            <p className="lede text-center mx-auto max-w-xl text-base text-ink-soft">
               Coordinators handle day-to-day questions about screening. The SPOC handles anything bigger.
             </p>
           </div>
         </Reveal>
 
-        <div className="mt-16 grid gap-10 sm:grid-cols-3">
+        <div className="mt-14 grid gap-10 sm:grid-cols-3">
           {PEOPLE_TO_CONTACT.map((p, i) => (
             <Reveal key={p.name} delay={i * 0.08}>
               <div className="flex flex-col items-center text-center">
@@ -36,7 +90,7 @@ export function Contact() {
                   />
                   <img src={p.photoUrl} alt={p.name} className="relative h-28 w-28 rounded-full object-cover shadow-lg shadow-ink/10" />
                 </div>
-                <div className="mt-4 font-bold">{p.name}</div>
+                <div className="mt-4 font-bold text-ink text-base">{p.name}</div>
                 <div className="mono mt-1 text-[0.62rem] text-marigold">{p.role}</div>
                 <p className="mt-2 text-[0.82rem] text-ink-soft">{p.note}</p>
                 <div className="mt-3 grid gap-1 text-[0.8rem]">
@@ -57,7 +111,7 @@ export function Contact() {
           />
           <div className="relative mx-auto grid max-w-[960px] gap-10 px-5 sm:grid-cols-2 sm:px-8">
             <div>
-              <h2 className="text-[1.15rem] font-bold">Follow the college</h2>
+              <h2 className="text-[1.15rem] font-bold text-paper">Follow the college</h2>
               <p className="mt-2 text-[0.85rem] text-paper/65">
                 Nagarjuna College of Engineering &amp; Technology, official accounts.
               </p>
@@ -68,7 +122,7 @@ export function Contact() {
               </div>
             </div>
             <div>
-              <h2 className="text-[1.15rem] font-bold">The national SIH team</h2>
+              <h2 className="text-[1.15rem] font-bold text-paper">The national SIH team</h2>
               <p className="mt-2 text-[0.85rem] text-paper/65">
                 For questions only AICTE / the MoE Innovation Cell can answer.
               </p>
@@ -87,41 +141,73 @@ export function Contact() {
         </div>
       </Reveal>
 
-      <div className="mx-auto max-w-[640px] px-5 pb-28 pt-16 sm:px-8">
+      <div className="mx-auto max-w-[640px] px-5 pb-16 pt-16 sm:px-8">
         <Reveal delay={0.15}>
-          <div className="border border-line bg-paper-2 p-8 sm:p-10">
+          <div className="rounded-2xl border border-line bg-paper-2 p-8 sm:p-10 shadow-sm">
             <div className="eyebrow text-left text-[0.85rem]">Or write it down</div>
-            <h2 className="mt-3 text-[1.4rem] font-bold">Send a message</h2>
+            <h2 className="mt-2 text-[1.4rem] font-bold text-ink">Send a message</h2>
             {sent ? (
-              <p className="mt-4 text-ink-soft">Thanks — a coordinator will get back to you shortly.</p>
+              <div className="mt-4 space-y-2">
+                <p className="text-sm font-bold text-marigold">Message Sent Successfully!</p>
+                <p className="text-xs text-ink-soft">Thanks — a coordinator will get back to you shortly.</p>
+                <button
+                  onClick={() => {
+                    setSent(false);
+                    setForm({ name: '', email: '', message: '' });
+                  }}
+                  className="mono text-xs font-bold text-marigold hover:underline pt-2 inline-block cursor-pointer"
+                >
+                  Send another message →
+                </button>
+              </div>
             ) : (
-              <form
-                className="mt-6 grid gap-4"
-                onSubmit={(e) => {
-                  e.preventDefault();
-                  setSent(true);
-                }}
-              >
-                <input
-                  required
-                  type="text"
-                  placeholder="Your name"
-                  className="border border-line bg-paper px-4 py-3 outline-none focus-visible:border-marigold"
-                />
-                <input
-                  required
-                  type="email"
-                  placeholder="Your email"
-                  className="border border-line bg-paper px-4 py-3 outline-none focus-visible:border-marigold"
-                />
-                <textarea
-                  required
-                  rows={4}
-                  placeholder="What's on your mind?"
-                  className="border border-line bg-paper px-4 py-3 outline-none focus-visible:border-marigold"
-                />
-                <Button type="submit" variant="primary" className="justify-self-start">
-                  Send message →
+              <form className="mt-6 grid gap-4" onSubmit={handleSubmit}>
+                <div className="space-y-1">
+                  <label className="text-xs font-bold text-ink block">
+                    Your name <span className="text-red-500 font-bold">*</span>
+                  </label>
+                  <input
+                    required
+                    type="text"
+                    value={form.name}
+                    onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
+                    placeholder="Your name"
+                    className="w-full rounded-xl border border-line bg-paper px-4 py-3 text-sm font-semibold text-ink placeholder:text-ink-soft/60 outline-none focus:border-marigold focus:bg-paper"
+                  />
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-xs font-bold text-ink block">
+                    Your email <span className="text-red-500 font-bold">*</span>
+                  </label>
+                  <input
+                    required
+                    type="email"
+                    value={form.email}
+                    onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))}
+                    placeholder="Your email"
+                    className="w-full rounded-xl border border-line bg-paper px-4 py-3 text-sm font-semibold text-ink placeholder:text-ink-soft/60 outline-none focus:border-marigold focus:bg-paper"
+                  />
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-xs font-bold text-ink block">
+                    What's on your mind? <span className="text-red-500 font-bold">*</span>
+                  </label>
+                  <textarea
+                    required
+                    rows={4}
+                    value={form.message}
+                    onChange={(e) => setForm((f) => ({ ...f, message: e.target.value }))}
+                    placeholder="What's on your mind?"
+                    className="w-full rounded-xl border border-line bg-paper px-4 py-3 text-sm font-semibold text-ink placeholder:text-ink-soft/60 outline-none focus:border-marigold focus:bg-paper"
+                  />
+                </div>
+
+                {error && <p className="text-xs font-bold text-red-600">{error}</p>}
+
+                <Button type="submit" variant="primary" disabled={loading} className="justify-self-start mt-1">
+                  {loading ? 'Sending message...' : 'Send message →'}
                 </Button>
               </form>
             )}

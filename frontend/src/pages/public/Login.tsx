@@ -37,46 +37,69 @@ export function Login() {
   }
 
   return (
-    <div className="mx-auto flex min-h-svh max-w-md flex-col justify-center px-5 py-32 sm:px-8">
+    <div className="mx-auto flex max-w-lg flex-col justify-center px-4 sm:px-8 pt-6 sm:pt-8 pb-20">
       <Reveal>
-        <div className="eyebrow mb-5">Welcome back</div>
-        <h1 className="text-[clamp(1.9rem,4vw,2.6rem)]">Log in to your account.</h1>
+        
+        {/* Header Block */}
+        <div className="text-center flex flex-col items-center justify-center mx-auto space-y-3 mb-8">
+          <div className="eyebrow">Welcome Back</div>
+          <h1 className="text-3xl sm:text-5xl font-bold tracking-tight text-ink text-center">
+            Log in to Portal
+          </h1>
+          <p className="lede text-center mx-auto text-base text-ink-soft max-w-sm">
+            Access your SIH 2026 team dashboard and submission status.
+          </p>
+        </div>
 
-        <form className="mt-9 grid gap-4" onSubmit={handleSubmit}>
-          <label className="grid gap-1.5 text-[0.8rem]">
-            Email
-            <input
-              type="email"
-              required
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="you@nagarjuna.edu"
-              className="border border-line bg-paper px-4 py-3 text-[0.95rem] outline-none focus-visible:border-marigold"
-            />
-          </label>
-          <label className="grid gap-1.5 text-[0.8rem]">
-            Password
-            <input
-              type="password"
-              required
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="••••••••"
-              className="border border-line bg-paper px-4 py-3 text-[0.95rem] outline-none focus-visible:border-marigold"
-            />
-          </label>
-          {error && <p className="text-[0.82rem] text-red-700">{error}</p>}
-          <Button type="submit" variant="primary" disabled={loading} className="mt-2 justify-center">
-            {loading ? 'Logging in...' : 'Log in →'}
-          </Button>
-        </form>
+        {/* High Contrast Login Form Card */}
+        <div className="rounded-3xl border-2 border-line bg-paper-2 p-6 sm:p-10 shadow-2xl space-y-6">
+          <form className="space-y-5" onSubmit={handleSubmit}>
+            
+            {/* Email Field */}
+            <div className="space-y-1.5">
+              <label className="mono text-xs font-bold text-ink uppercase tracking-wider block">
+                Email <span className="text-red-500 font-bold">*</span>
+              </label>
+              <input
+                type="email"
+                required
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="you@example.com"
+                className="w-full rounded-2xl border-2 border-line bg-paper px-4 py-3.5 text-base font-semibold text-ink placeholder:text-ink-soft/60 focus:border-marigold focus:bg-paper outline-none transition-all shadow-xs"
+              />
+            </div>
 
-        <p className="mt-6 text-[0.85rem] text-ink-soft">
+            {/* Password Field */}
+            <div className="space-y-1.5">
+              <label className="mono text-xs font-bold text-ink uppercase tracking-wider block">
+                Password <span className="text-red-500 font-bold">*</span>
+              </label>
+              <input
+                type="password"
+                required
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="Enter your password"
+                className="w-full rounded-2xl border-2 border-line bg-paper px-4 py-3.5 text-base font-semibold text-ink placeholder:text-ink-soft/60 focus:border-marigold focus:bg-paper outline-none transition-all shadow-xs"
+              />
+            </div>
+
+            {error && <p className="text-xs font-bold text-red-600 pt-1">{error}</p>}
+
+            <Button type="submit" variant="primary" disabled={loading} className="w-full rounded-full py-4 text-base font-bold mono justify-center shadow-lg shadow-marigold/30">
+              {loading ? 'Logging in...' : 'Log in to Account →'}
+            </Button>
+          </form>
+        </div>
+
+        <p className="mt-6 text-center text-sm font-medium text-ink-soft">
           New here?{' '}
-          <Link to="/register" className="text-marigold hover:underline">
-            Register your team
+          <Link to="/register" className="font-bold text-marigold hover:underline">
+            Register your team for SIH 2026
           </Link>
         </p>
+
       </Reveal>
     </div>
   );

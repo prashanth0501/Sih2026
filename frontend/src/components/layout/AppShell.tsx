@@ -68,7 +68,7 @@ export function AppShell({ title, navItems }: { title: string; navItems: AppNavI
       <div className="mx-auto flex max-w-[1400px]">
         {/* Desktop Sidebar Nav */}
         <nav className="mono sticky top-[53px] hidden h-[calc(100vh-53px)] w-60 shrink-0 flex-col gap-1.5 border-r border-line bg-paper p-4 text-[0.75rem] sm:flex">
-          <div className="mb-2 text-[0.62rem] tracking-wider text-ink-soft uppercase">Navigation</div>
+          <div className="mb-2 text-[0.62rem] font-bold tracking-wider text-marigold uppercase">Portal Quick Access</div>
           {navItems.map((item) => (
             <NavLink
               key={item.to}
@@ -76,8 +76,8 @@ export function AppShell({ title, navItems }: { title: string; navItems: AppNavI
               end
               className={({ isActive }) =>
                 cn(
-                  'rounded-[2px] px-3 py-2.5 text-ink-soft transition-colors hover:bg-paper-3 hover:text-ink',
-                  isActive && 'bg-paper-3 text-ink font-bold border-l-2 border-marigold'
+                  'rounded-xl px-3.5 py-2.5 text-ink-soft transition-all hover:bg-paper-3 hover:text-ink',
+                  isActive && 'bg-marigold/15 text-marigold font-bold border-l-4 border-marigold'
                 )
               }
             >
@@ -90,8 +90,8 @@ export function AppShell({ title, navItems }: { title: string; navItems: AppNavI
         {mobileOpen && (
           <div className="fixed inset-0 z-50 flex flex-col bg-paper p-6 sm:hidden">
             <div className="flex items-center justify-between border-b border-line pb-4">
-              <span className="font-display font-bold">Ignite Menu</span>
-              <button onClick={() => setMobileOpen(false)} className="text-xl">✕</button>
+              <span className="font-display font-bold text-lg">SIH 2026 Portal Menu</span>
+              <button onClick={() => setMobileOpen(false)} className="flex h-8 w-8 items-center justify-center rounded-full border border-line text-lg font-bold">✕</button>
             </div>
             <div className="mono mt-4 flex flex-col gap-2 text-[0.9rem]">
               {navItems.map((item) => (
@@ -102,8 +102,8 @@ export function AppShell({ title, navItems }: { title: string; navItems: AppNavI
                   onClick={() => setMobileOpen(false)}
                   className={({ isActive }) =>
                     cn(
-                      'rounded p-3 text-ink-soft',
-                      isActive && 'bg-paper-3 text-ink font-bold'
+                      'rounded-xl p-3 text-ink-soft transition-all',
+                      isActive && 'bg-marigold/15 text-marigold font-bold border-l-4 border-marigold'
                     )
                   }
                 >

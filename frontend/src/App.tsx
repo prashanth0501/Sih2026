@@ -39,6 +39,8 @@ import { PromoPostDetails } from '@/pages/admin/PromoPostDetails';
 import { UpdatesComposer } from '@/pages/admin/UpdatesComposer';
 import { ContentEditor } from '@/pages/admin/ContentEditor';
 
+import { ScrollToTop } from '@/components/ScrollToTop';
+
 const queryClient = new QueryClient();
 
 const DASHBOARD_NAV = [
@@ -63,6 +65,7 @@ function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <BrowserRouter>
+        <ScrollToTop />
         <AuthProvider>
           <Routes>
             <Route element={<PublicLayout />}>

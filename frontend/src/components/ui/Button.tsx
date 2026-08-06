@@ -3,7 +3,7 @@ import { Link, type LinkProps } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 
 const base =
-  'mono inline-flex items-center gap-2.5 rounded-sm border px-6 py-4 text-[0.74rem] transition-colors duration-150 will-change-transform';
+  'mono inline-flex items-center gap-2.5 rounded-xl border px-6 py-4 text-[0.74rem] transition-colors duration-150 will-change-transform';
 const variants = {
   primary: 'bg-ink text-paper border-ink hover:bg-marigold hover:border-marigold',
   ghost: 'bg-transparent text-ink border-ink hover:border-marigold hover:text-marigold',

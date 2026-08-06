@@ -2,11 +2,13 @@ import { Reveal } from '@/components/Reveal';
 
 export function PrivacyPolicy() {
   return (
-    <div className="mx-auto max-w-[760px] px-5 pb-28 pt-32 sm:px-8">
+    <div className="mx-auto max-w-[760px] px-5 pb-16 pt-6 sm:pt-8">
       <Reveal>
-        <div className="eyebrow mb-5">Legal</div>
-        <h1 className="text-[clamp(2rem,5vw,3rem)]">Privacy Policy &amp; Disclaimer</h1>
-        <p className="mt-5 text-ink-soft">Last updated: 2026.</p>
+        <div className="text-center flex flex-col items-center justify-center mx-auto max-w-3xl space-y-2">
+          <div className="eyebrow">Legal</div>
+          <h1 className="text-3xl sm:text-5xl font-bold tracking-tight text-ink text-center">Privacy Policy &amp; Disclaimer</h1>
+          <p className="text-sm text-ink-soft text-center">Last updated: 2026.</p>
+        </div>
       </Reveal>
 
       <div className="mt-12 grid gap-9 text-ink-soft">

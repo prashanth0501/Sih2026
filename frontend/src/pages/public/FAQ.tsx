@@ -32,10 +32,12 @@ export function FAQ() {
   const [open, setOpen] = useState<number | null>(0);
 
   return (
-    <div className="mx-auto max-w-[760px] px-5 pb-28 pt-32 sm:px-8">
+    <div className="mx-auto max-w-[760px] px-5 pb-16 pt-6 sm:pt-8">
       <Reveal>
-        <div className="eyebrow mb-5">FAQ</div>
-        <h1 className="text-[clamp(2rem,5vw,3rem)]">Questions people actually ask.</h1>
+        <div className="text-center flex flex-col items-center justify-center mx-auto max-w-3xl space-y-3">
+          <div className="eyebrow">FAQ</div>
+          <h1 className="text-3xl sm:text-5xl font-bold tracking-tight text-ink text-center">Questions people actually ask.</h1>
+        </div>
       </Reveal>
 
       <div className="mt-14 divide-y divide-line border-t border-line">

@@ -73,12 +73,12 @@ export function Landing() {
               <img
                 src="/hero/gears-team.webp"
                 alt="A team of students gathered around a mechanical prototype"
-                className="h-72 w-full rounded-sm object-cover shadow-xl shadow-ink/15 sm:absolute sm:left-0 sm:top-0 sm:h-[300px] sm:w-[62%] sm:-rotate-1"
+                className="h-72 w-full rounded-2xl object-cover shadow-xl shadow-ink/15 sm:absolute sm:left-0 sm:top-0 sm:h-[300px] sm:w-[62%] sm:-rotate-1"
               />
               <img
                 src="/hero/lab-electronics.webp"
                 alt="Students wiring a circuit board together in a lab"
-                className="mt-5 h-56 w-full rounded-sm object-cover shadow-xl shadow-ink/15 sm:absolute sm:bottom-0 sm:right-0 sm:mt-0 sm:h-[260px] sm:w-[46%] sm:rotate-1"
+                className="mt-5 h-56 w-full rounded-2xl object-cover shadow-xl shadow-ink/15 sm:absolute sm:bottom-0 sm:right-0 sm:mt-0 sm:h-[260px] sm:w-[46%] sm:rotate-1"
               />
             </div>
           </Reveal>
@@ -91,7 +91,7 @@ export function Landing() {
       <section className="px-5 py-20 sm:px-8 md:py-28">
         <div className="mx-auto max-w-[1180px]">
           <Reveal>
-            <div className="relative overflow-hidden rounded-sm">
+            <div className="relative overflow-hidden rounded-2xl">
               <img
                 src="/gallery/nodal-podium.webp"
                 alt="A speaker addressing the SIH 2025 nodal-centre audience from a Nagarjuna-branded podium"
@@ -167,7 +167,7 @@ export function Landing() {
               { step: 'Step 04', title: 'Finale', body: 'Selected teams get their certificate. The national SIH begins.' },
             ].map((n, i) => (
               <Reveal key={n.step} delay={i * 0.08} className="w-[78%] shrink-0 sm:w-auto">
-                <div className="h-full border border-line bg-paper-2 p-6">
+                <div className="h-full rounded-xl border border-line bg-paper-2 p-6">
                   <div className="mb-4 h-2.5 w-2.5 rounded-full bg-spark" style={{ boxShadow: '0 0 10px var(--color-spark-glow)' }} />
                   <div className="mono text-[0.68rem] text-ink-soft">{n.step}</div>
                   <h3 className="my-2.5 text-[1.15rem] font-bold">{n.title}</h3>

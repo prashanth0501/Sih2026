@@ -51,7 +51,7 @@
 html {
   scroll-behavior: smooth;
   background: var(--color-paper);
-  min-height: 100%;
+  height: 100%;
 }
 @media (prefers-reduced-motion: reduce) {
   html {
@@ -65,7 +65,7 @@ body {
 }
 
 body {
-  min-height: 100vh;
+  min-height: 100%;
 }
 
 body {
@@ -75,6 +75,15 @@ body {
   font-family: var(--font-body);
   -webkit-font-smoothing: antialiased;
   overflow-x: hidden;
+}
+
+/* The app root fills the viewport so the page can never be shorter than the
+   window — the footer always sits at (or below) the bottom of the viewport and
+   there is never blank scrollable space beneath it. */
+#root {
+  min-height: 100%;
+  max-width: 100%;
+  overflow-x: clip;
 }
 
 h1,
@@ -92,8 +101,28 @@ p {
 }
 
 ::selection {
-  background: var(--color-spark);
-  color: var(--color-paper);
+  background: rgba(255, 169, 46, 0.35);
+  color: #1f1435;
+}
+
+/* Global border-radius defaults to ensure smooth rounded corners on all boxes, buttons, inputs, cards, and containers */
+input,
+select,
+textarea {
+  border-radius: 0.875rem;
+}
+
+button {
+  border-radius: 0.875rem;
+}
+
+img {
+  border-radius: 1rem;
+}
+
+code,
+pre {
+  border-radius: 0.75rem;
 }
 
 :focus-visible {
@@ -122,6 +151,7 @@ p {
   font-size: 1.12rem;
   line-height: 1.7;
   font-weight: 450;
+  text-align: center;
 }
 @media (min-width: 640px) {
   .lede {
