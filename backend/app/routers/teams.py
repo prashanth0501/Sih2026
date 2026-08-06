@@ -1,5 +1,6 @@
 import re
 from fastapi import APIRouter, Depends, HTTPException, Query, status
+from pydantic import BaseModel
 
 from app.core.deps import get_current_user, require_role
 from app.db import mongo
@@ -9,6 +10,14 @@ from app.services import screening
 MAX_MEMBERS = 5  # + the leader = 6 total, per the official SIH team-size rule
 
 router = APIRouter(prefix="/api/v1/teams", tags=["teams"])
+
+
+class TeamAdminUpdate(BaseModel):
+    name: str | None = None
+    theme: str | None = None
+    problem_statement_id: str | None = None
+    status: str | None = None
+    members: list[TeamMember] | None = None
 
 
 async def _get_owned_or_404(team_id: str) -> dict:
@@ -23,6 +32,32 @@ def _require_unlocked(team: dict) -> None:
         raise HTTPException(status.HTTP_423_LOCKED, "This team has been finalised by the SPOC/coordinators and can no longer be edited")
 
 
+async def _check_usn_available(usn: str, current_team_id: str | None = None) -> None:
+    if not usn or not usn.strip():
+        return
+    clean_usn = usn.strip()
+    regex_usn = {"$regex": f"^{re.escape(clean_usn)}$", "$options": "i"}
+
+    # Search for teams containing this USN in leader or members
+    existing_team = await mongo.teams.find_one({
+        "_id": {"$ne": current_team_id} if current_team_id else {"$exists": True},
+        "$or": [
+            {"members.usn": regex_usn},
+            {"leader_usn": regex_usn},
+        ],
+    })
+
+    if existing_team:
+        # If it's a solo team with no members and no PPT submission, auto-disband it for re-assignment
+        if len(existing_team.get("members", [])) == 0 and not existing_team.get("level1", {}).get("submission_url"):
+            await mongo.teams.delete_one({"_id": existing_team["id"]})
+        else:
+            raise HTTPException(
+                status.HTTP_409_CONFLICT,
+                f"Student with USN '{clean_usn}' is already registered in team '{existing_team['name']}'. Each participant can belong to only 1 team.",
+            )
+
+
 @router.post("", response_model=TeamPublic, status_code=status.HTTP_201_CREATED)
 async def create_team(body: TeamCreate, user: dict = Depends(get_current_user)):
     sys_settings = await mongo.get_system_settings()
@@ -33,6 +68,17 @@ async def create_team(body: TeamCreate, user: dict = Depends(get_current_user)):
     if existing:
         raise HTTPException(status.HTTP_409_CONFLICT, "You already lead a team")
 
+    leader_usn = body.leader_usn or user.get("usn", "")
+    if leader_usn:
+        await _check_usn_available(leader_usn)
+        # Update leader user record with USN
+        await mongo.users.update_one({"_id": user["id"]}, {"$set": {"usn": leader_usn}})
+
+    # Check member USNs uniqueness
+    for m in body.members:
+        if m.usn:
+            await _check_usn_available(m.usn)
+
     tid = mongo.new_id("team")
     now = mongo.now_iso()
     members_list = [m.model_dump() for m in body.members]
@@ -42,6 +88,7 @@ async def create_team(body: TeamCreate, user: dict = Depends(get_current_user)):
         "id": tid,
         "name": body.name,
         "leader_id": user["id"],
+        "leader_usn": leader_usn,
         "problem_statement_id": None,
         "theme": body.theme,
         "members": members_list,
@@ -54,9 +101,9 @@ async def create_team(body: TeamCreate, user: dict = Depends(get_current_user)):
     }
     await mongo.teams.insert_one(team)
 
-    # Ensure login accounts for members
+    # Ensure login accounts for members with USN
     for m in body.members:
-        await mongo.ensure_member_login(m.name, m.email, m.department, m.year)
+        await mongo.ensure_member_login(m.name, m.email, m.department, m.year, m.usn, m.github_url)
 
     return team
 
@@ -72,6 +119,12 @@ async def my_team(user: dict = Depends(get_current_user)):
     if team:
         return {**team, "viewer_is_leader": False}
 
+    usn = user.get("usn", "").strip()
+    if usn:
+        team = await mongo.teams.find_one({"members.usn": {"$regex": f"^{re.escape(usn)}$", "$options": "i"}})
+        if team:
+            return {**team, "viewer_is_leader": False}
+
     raise HTTPException(status.HTTP_404_NOT_FOUND, "You're not on a team yet")
 
 
@@ -80,17 +133,17 @@ async def list_teams(
     status_filter: str | None = Query(None, alias="status"),
     q: str | None = None,
     page: int = 1,
-    page_size: int = 200,
+    page_size: int = 500,
     user: dict = Depends(require_role("coordinator")),
 ):
     query = {}
-    if status_filter:
+    if status_filter and status_filter != "all":
         query["status"] = status_filter
     if q:
         query["name"] = {"$regex": re.escape(q), "$options": "i"}
 
     start = (page - 1) * page_size
-    cursor = mongo.teams.find(query).skip(start).limit(page_size)
+    cursor = mongo.teams.find(query).sort("created_at", -1).skip(start).limit(page_size)
     return await cursor.to_list(length=None)
 
 
@@ -99,6 +152,34 @@ async def get_team(team_id: str, user: dict = Depends(get_current_user)):
     team = await _get_owned_or_404(team_id)
     is_leader = team["leader_id"] == user["id"]
     return {**team, "viewer_is_leader": is_leader}
+
+
+@router.patch("/{team_id}", response_model=TeamPublic)
+async def admin_update_team(
+    team_id: str,
+    body: TeamAdminUpdate,
+    _coordinator: dict = Depends(require_role("coordinator")),
+):
+    team = await _get_owned_or_404(team_id)
+    now = mongo.now_iso()
+    updates = {"updated_at": now}
+
+    if body.name is not None:
+        updates["name"] = body.name
+    if body.theme is not None:
+        updates["theme"] = body.theme
+    if body.problem_statement_id is not None:
+        updates["problem_statement_id"] = body.problem_statement_id
+    if body.status is not None:
+        updates["status"] = body.status
+    if body.members is not None:
+        updates["members"] = [m.model_dump() for m in body.members]
+        for m in body.members:
+            await mongo.ensure_member_login(m.name, m.email, m.department, m.year, m.usn, m.github_url)
+
+    await mongo.teams.update_one({"_id": team_id}, {"$set": updates})
+    updated = await mongo.teams.find_one({"_id": team_id})
+    return updated
 
 
 @router.patch("/{team_id}/lock", response_model=TeamPublic)
@@ -119,6 +200,11 @@ async def add_member(team_id: str, body: TeamMember, user: dict = Depends(get_cu
     _require_unlocked(team)
     if len(team["members"]) >= MAX_MEMBERS:
         raise HTTPException(status.HTTP_400_BAD_REQUEST, f"A team can have at most {MAX_MEMBERS} members plus the leader")
+
+    # Check unique USN & Email
+    if body.usn:
+        await _check_usn_available(body.usn, current_team_id=team_id)
+
     if any(m["email"].lower() == body.email.lower() for m in team["members"]):
         raise HTTPException(status.HTTP_409_CONFLICT, "That email is already on this team")
 
@@ -128,7 +214,7 @@ async def add_member(team_id: str, body: TeamMember, user: dict = Depends(get_cu
     team["members"].append(member_dict)
     team["updated_at"] = now
 
-    await mongo.ensure_member_login(body.name, body.email, body.department, body.year)
+    await mongo.ensure_member_login(body.name, body.email, body.department, body.year, body.usn, body.github_url)
     return team
 
 

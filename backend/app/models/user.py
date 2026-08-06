@@ -13,6 +13,8 @@ class UserRegister(BaseModel):
     password: str
     department: str
     year: int
+    usn: str = ""
+    github_url: str = ""
 
 
 class UserLogin(BaseModel):
@@ -27,6 +29,8 @@ class UserPublic(BaseModel):
     role: Role
     department: str | None = None
     year: int | None = None
+    usn: str | None = ""
+    github_url: str | None = ""
     photo_url: str | None = None
 
 

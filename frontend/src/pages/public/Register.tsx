@@ -10,7 +10,7 @@ import { createTeam, type ApiTeamMember } from '@/api/teams';
 import { getSystemSettings } from '@/api/settings';
 
 const DEPARTMENTS = ['CSE', 'ISE', 'AI & ML', 'ECE', 'EEE', 'Mechanical', 'Civil', 'Biotech'];
-const STEPS = ['Leader account', 'Team & Members GitHub'];
+const STEPS = ['Leader details & USN', 'Team roster & GitHub'];
 
 export function Register() {
   const { signup } = useAuth();
@@ -27,6 +27,7 @@ export function Register() {
   const [form, setForm] = useState({
     name: '',
     email: '',
+    usn: '',
     password: '',
     department: DEPARTMENTS[0],
     year: 2,
@@ -40,6 +41,7 @@ export function Register() {
   const [newMember, setNewMember] = useState({
     name: '',
     email: '',
+    usn: '',
     department: DEPARTMENTS[0],
     year: 2,
     github_url: '',
@@ -50,8 +52,8 @@ export function Register() {
   }
 
   function handleAddMember() {
-    if (!newMember.name || !newMember.email || !newMember.github_url) {
-      setError('Member name, college email, and GitHub URL are compulsory.');
+    if (!newMember.name || !newMember.email || !newMember.usn || !newMember.github_url) {
+      setError('Member name, email, compulsory USN, and GitHub profile URL are required.');
       return;
     }
     if (!newMember.github_url.toLowerCase().includes('github.com')) {
@@ -63,6 +65,7 @@ export function Register() {
     setNewMember({
       name: '',
       email: '',
+      usn: '',
       department: DEPARTMENTS[0],
       year: 2,
       github_url: '',
@@ -77,6 +80,11 @@ export function Register() {
     e.preventDefault();
     setError('');
 
+    if (!form.usn.trim()) {
+      setError('Leader USN is compulsory (e.g. 1NC22CS005).');
+      return;
+    }
+
     if (!form.leaderGithub || !form.leaderGithub.toLowerCase().includes('github.com')) {
       setError('Leader GitHub profile URL is compulsory (e.g. https://github.com/your-username).');
       return;
@@ -87,6 +95,7 @@ export function Register() {
       await signup({
         name: form.name,
         email: form.email,
+        usn: form.usn.toUpperCase(),
         password: form.password,
         department: form.department,
         year: form.year,
@@ -95,6 +104,8 @@ export function Register() {
       await createTeam({
         name: form.teamName,
         theme: form.theme,
+        leader_usn: form.usn.toUpperCase(),
+        leader_github_url: form.leaderGithub,
         members,
       });
 
@@ -128,7 +139,7 @@ export function Register() {
   return (
     <div className="mx-auto max-w-xl px-5 py-28 sm:px-8">
       <Reveal>
-        <div className="eyebrow mb-4">Team Leader Registration</div>
+        <div className="eyebrow mb-4">Team Registration &amp; USN Verification</div>
         <h1 className="text-[clamp(1.9rem,4vw,2.5rem)] font-bold">Register your SIH team.</h1>
 
         <div className="mt-6 flex gap-2.5">
@@ -145,8 +156,8 @@ export function Register() {
           onSubmit={(e) => {
             if (step === 0) {
               e.preventDefault();
-              if (!form.name || !form.email || !form.password || !form.leaderGithub) {
-                setError('All leader details including GitHub URL are required.');
+              if (!form.name || !form.email || !form.usn || !form.password || !form.leaderGithub) {
+                setError('Leader full name, email, compulsory USN, and GitHub URL are required.');
                 return;
               }
               if (!form.leaderGithub.toLowerCase().includes('github.com')) {
@@ -172,17 +183,30 @@ export function Register() {
                   className="border border-line bg-paper px-4 py-3 outline-none focus-visible:border-marigold"
                 />
               </label>
-              <label className="grid gap-1.5 text-[0.8rem]">
-                College email
-                <input
-                  type="email"
-                  required
-                  value={form.email}
-                  onChange={(e) => update('email', e.target.value)}
-                  placeholder="leader@nagarjuna.edu"
-                  className="border border-line bg-paper px-4 py-3 outline-none focus-visible:border-marigold"
-                />
-              </label>
+
+              <div className="grid grid-cols-2 gap-4">
+                <label className="grid gap-1.5 text-[0.8rem]">
+                  College USN <span className="text-red-500 font-bold">*Compulsory Unique</span>
+                  <input
+                    required
+                    value={form.usn}
+                    onChange={(e) => update('usn', e.target.value)}
+                    placeholder="e.g. 1NC22CS005"
+                    className="border border-line bg-paper px-4 py-3 outline-none focus-visible:border-marigold font-mono text-[0.85rem] uppercase"
+                  />
+                </label>
+                <label className="grid gap-1.5 text-[0.8rem]">
+                  College email
+                  <input
+                    type="email"
+                    required
+                    value={form.email}
+                    onChange={(e) => update('email', e.target.value)}
+                    placeholder="leader@nagarjuna.edu"
+                    className="border border-line bg-paper px-4 py-3 outline-none focus-visible:border-marigold"
+                  />
+                </label>
+              </div>
 
               {/* Compulsory GitHub URL */}
               <label className="grid gap-1.5 text-[0.8rem]">
@@ -240,7 +264,7 @@ export function Register() {
 
               {error && <p className="text-[0.82rem] text-red-600 font-medium">{error}</p>}
               <Button type="submit" variant="primary" className="mt-2 justify-center">
-                Continue to Team Details →
+                Continue to Team Roster →
               </Button>
             </>
           ) : (
@@ -269,17 +293,17 @@ export function Register() {
                 </select>
               </label>
 
-              {/* Teammates Section with mandatory GitHub URL */}
+              {/* Teammates Section with mandatory USN & GitHub URL */}
               <div className="border border-line bg-paper-2 p-4 mt-2">
                 <div className="font-bold text-[0.85rem] mb-2">Team Members ({members.length} added)</div>
                 <p className="text-[0.75rem] text-ink-soft mb-3">
-                  Each member must provide their GitHub profile link.
+                  Each member must provide their USN and GitHub profile link.
                 </p>
 
                 {members.map((m, idx) => (
                   <div key={idx} className="flex items-center justify-between border-b border-line py-2 text-[0.8rem]">
                     <div>
-                      <span className="font-medium">{m.name}</span> ({m.department} · Y{m.year})
+                      <span className="font-medium">{m.name}</span> ({m.usn} · {m.department})
                       <div className="mono text-[0.7rem] text-marigold">{m.github_url}</div>
                     </div>
                     <button
@@ -302,20 +326,28 @@ export function Register() {
                         className="border border-line bg-paper px-3 py-2 text-[0.8rem]"
                       />
                       <input
+                        placeholder="Member USN *"
+                        value={newMember.usn}
+                        onChange={(e) => setNewMember((nm) => ({ ...nm, usn: e.target.value.toUpperCase() }))}
+                        className="border border-line bg-paper px-3 py-2 text-[0.8rem] font-mono uppercase"
+                      />
+                    </div>
+                    <div className="grid grid-cols-2 gap-2">
+                      <input
                         placeholder="Member Email"
                         type="email"
                         value={newMember.email}
                         onChange={(e) => setNewMember((nm) => ({ ...nm, email: e.target.value }))}
                         className="border border-line bg-paper px-3 py-2 text-[0.8rem]"
                       />
+                      <input
+                        placeholder="Member GitHub URL *"
+                        type="url"
+                        value={newMember.github_url}
+                        onChange={(e) => setNewMember((nm) => ({ ...nm, github_url: e.target.value }))}
+                        className="border border-line bg-paper px-3 py-2 text-[0.8rem] font-mono"
+                      />
                     </div>
-                    <input
-                      placeholder="Member GitHub URL *"
-                      type="url"
-                      value={newMember.github_url}
-                      onChange={(e) => setNewMember((nm) => ({ ...nm, github_url: e.target.value }))}
-                      className="border border-line bg-paper px-3 py-2 text-[0.8rem] font-mono"
-                    />
                     <button
                       type="button"
                       onClick={handleAddMember}

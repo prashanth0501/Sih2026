@@ -8,6 +8,8 @@ export type ApiUser = {
   role: Role;
   department?: string | null;
   year?: number | null;
+  usn?: string | null;
+  github_url?: string | null;
 };
 
 type TokenResponse = { access_token: string; token_type: string; user: ApiUser };
@@ -17,7 +19,15 @@ export async function apiLogin(email: string, password: string) {
   return data;
 }
 
-export async function apiRegister(input: { name: string; email: string; password: string; department: string; year: number }) {
+export async function apiRegister(input: {
+  name: string;
+  email: string;
+  password: string;
+  department: string;
+  year: number;
+  usn?: string;
+  github_url?: string;
+}) {
   const { data } = await api.post<TokenResponse>('/auth/register', input);
   return data;
 }

@@ -58,12 +58,27 @@ async def find_user_by_email(email: str) -> dict | None:
     return await users.find_one({"email": {"$regex": f"^{escaped_email}$", "$options": "i"}})
 
 
-async def ensure_member_login(name: str, email: str, department: str, year: int) -> dict:
+async def find_user_by_usn(usn: str) -> dict | None:
+    if not usn or not usn.strip():
+        return None
+    escaped_usn = re.escape(usn.strip())
+    return await users.find_one({"usn": {"$regex": f"^{escaped_usn}$", "$options": "i"}})
+
+
+async def ensure_member_login(name: str, email: str, department: str, year: int, usn: str = "", github_url: str = "") -> dict:
     existing = await find_user_by_email(email)
     if existing:
+        updates = {}
+        if usn and not existing.get("usn"):
+            updates["usn"] = usn
+        if github_url and not existing.get("github_url"):
+            updates["github_url"] = github_url
+        if updates:
+            await users.update_one({"_id": existing["id"]}, {"$set": updates})
+            existing.update(updates)
         return existing
 
-    from app.core.security import hash_password  # local import avoids circular import
+    from app.core.security import hash_password
 
     uid = new_id("user")
     user = {
@@ -75,6 +90,8 @@ async def ensure_member_login(name: str, email: str, department: str, year: int)
         "role": "participant",
         "department": department,
         "year": year,
+        "usn": usn,
+        "github_url": github_url,
         "photo_url": None,
         "created_at": now_iso(),
     }

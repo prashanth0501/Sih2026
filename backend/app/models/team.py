@@ -14,8 +14,6 @@ ScreeningStatus = Literal[
     "l2_rejected",
 ]
 
-# Only these transitions are legal — the screening service is the only code
-# allowed to move a team between states (ARCHITECTURE.md section 6).
 ALLOWED_TRANSITIONS: dict[ScreeningStatus, list[ScreeningStatus]] = {
     "registered": ["l1_submitted"],
     "l1_submitted": ["l1_under_review"],
@@ -32,6 +30,7 @@ ALLOWED_TRANSITIONS: dict[ScreeningStatus, list[ScreeningStatus]] = {
 class TeamMember(BaseModel):
     name: str
     email: EmailStr
+    usn: str = ""
     department: str
     year: int
     role: str = "member"
@@ -41,6 +40,7 @@ class TeamMember(BaseModel):
 class TeamCreate(BaseModel):
     name: str
     theme: str | None = None
+    leader_usn: str = ""
     leader_github_url: str = ""
     members: list[TeamMember] = []
 

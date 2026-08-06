@@ -3,6 +3,7 @@ import { api } from './client';
 export type ApiTeamMember = {
   name: string;
   email: string;
+  usn: string;
   department: string;
   year: number;
   role: string;
@@ -20,7 +21,9 @@ export type ApiTeam = {
   id: string;
   name: string;
   leader_id: string;
+  leader_usn?: string;
   theme: string | null;
+  problem_statement_id?: string | null;
   members: ApiTeamMember[];
   status: string;
   is_locked: boolean;
@@ -29,10 +32,18 @@ export type ApiTeam = {
   level2: ApiScreeningRound;
 };
 
-export async function createTeam(input: { name: string; theme?: string; members?: ApiTeamMember[] }) {
+export async function createTeam(input: {
+  name: string;
+  theme?: string;
+  leader_usn?: string;
+  leader_github_url?: string;
+  members?: ApiTeamMember[];
+}) {
   const { data } = await api.post<ApiTeam>('/teams', {
     name: input.name,
     theme: input.theme || null,
+    leader_usn: input.leader_usn || '',
+    leader_github_url: input.leader_github_url || '',
     members: input.members || [],
   });
   return data;
@@ -60,6 +71,14 @@ export async function listAllTeams(params?: { status?: string; q?: string; page?
 
 export async function setTeamLock(teamId: string, locked: boolean) {
   const { data } = await api.patch<ApiTeam>(`/teams/${teamId}/lock`, { locked });
+  return data;
+}
+
+export async function adminUpdateTeam(
+  teamId: string,
+  input: { name?: string; theme?: string; problem_statement_id?: string; status?: string; members?: ApiTeamMember[] }
+) {
+  const { data } = await api.patch<ApiTeam>(`/teams/${teamId}`, input);
   return data;
 }
 

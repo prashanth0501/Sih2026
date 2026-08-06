@@ -9,14 +9,14 @@ const MAX_MEMBERS = 5;
 export function TeamMembers() {
   const queryClient = useQueryClient();
   const { data: team, isLoading, error } = useQuery({ queryKey: ['my-team'], queryFn: getMyTeam, retry: false });
-  const [form, setForm] = useState({ name: '', email: '', department: DEPARTMENTS[0], year: 2, role: 'member' });
+  const [form, setForm] = useState({ name: '', email: '', usn: '', github_url: '', department: DEPARTMENTS[0], year: 2, role: 'member' });
   const [formError, setFormError] = useState('');
 
   const addMutation = useMutation({
     mutationFn: (input: typeof form) => addTeamMember(team!.id, input),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['my-team'] });
-      setForm({ name: '', email: '', department: DEPARTMENTS[0], year: 2, role: 'member' });
+      setForm({ name: '', email: '', usn: '', github_url: '', department: DEPARTMENTS[0], year: 2, role: 'member' });
     },
     onError: (e: unknown) => {
       const message = (e as { response?: { data?: { detail?: string } } })?.response?.data?.detail;
@@ -37,7 +37,7 @@ export function TeamMembers() {
         <h1 className="font-display text-[1.6rem] font-bold">Team members</h1>
         <p className="mt-3 text-ink-soft">
           You're not on a team yet. If you're meant to be a member, ask your team leader to add you — they'll
-          need your name, college email, department, and year. Otherwise, register a team of your own from
+          need your name, USN, college email, department, and year. Otherwise, register a team of your own from
           the <a href="/register" className="text-marigold hover:underline">Register</a> page.
         </p>
       </div>
@@ -68,10 +68,15 @@ export function TeamMembers() {
         {team.members.map((m) => (
           <div key={m.email} className="flex items-center justify-between gap-4 border border-line bg-paper p-4">
             <div>
-              <div className="font-medium">{m.name}</div>
+              <div className="font-medium">{m.name} <span className="mono text-[0.75rem] text-marigold font-bold">({m.usn || 'No USN'})</span></div>
               <div className="text-[0.8rem] text-ink-soft">
                 {m.email} · {m.department} · Y{m.year}
               </div>
+              {m.github_url && (
+                <a href={m.github_url} target="_blank" rel="noopener noreferrer" className="mono text-[0.7rem] text-marigold hover:underline">
+                  {m.github_url}
+                </a>
+              )}
             </div>
             {canEdit && (
               <button
@@ -93,7 +98,11 @@ export function TeamMembers() {
           onSubmit={(e) => {
             e.preventDefault();
             setFormError('');
-            addMutation.mutate(form);
+            if (!form.usn.trim()) {
+              setFormError('Member USN is compulsory (e.g. 1NC22CS005).');
+              return;
+            }
+            addMutation.mutate({ ...form, usn: form.usn.toUpperCase() });
           }}
         >
           <div className="mono text-[0.68rem] text-marigold">Add a teammate</div>
@@ -108,6 +117,19 @@ export function TeamMembers() {
               />
             </label>
             <label className="grid gap-1.5 text-[0.8rem]">
+              College USN <span className="text-red-500 font-bold">*Compulsory</span>
+              <input
+                required
+                value={form.usn}
+                onChange={(e) => setForm((f) => ({ ...f, usn: e.target.value.toUpperCase() }))}
+                placeholder="e.g. 1NC22CS005"
+                className="border border-line bg-paper-2 px-4 py-2.5 outline-none focus-visible:border-marigold font-mono uppercase"
+              />
+            </label>
+          </div>
+
+          <div className="grid gap-4 sm:grid-cols-2">
+            <label className="grid gap-1.5 text-[0.8rem]">
               College email
               <input
                 required
@@ -117,6 +139,20 @@ export function TeamMembers() {
                 className="border border-line bg-paper-2 px-4 py-2.5 outline-none focus-visible:border-marigold"
               />
             </label>
+            <label className="grid gap-1.5 text-[0.8rem]">
+              GitHub Profile URL *
+              <input
+                required
+                type="url"
+                value={form.github_url}
+                onChange={(e) => setForm((f) => ({ ...f, github_url: e.target.value }))}
+                placeholder="https://github.com/username"
+                className="border border-line bg-paper-2 px-4 py-2.5 outline-none focus-visible:border-marigold font-mono text-[0.85rem]"
+              />
+            </label>
+          </div>
+
+          <div className="grid gap-4 sm:grid-cols-2">
             <label className="grid gap-1.5 text-[0.8rem]">
               Department
               <select
@@ -142,14 +178,14 @@ export function TeamMembers() {
               </select>
             </label>
           </div>
-          {formError && <p className="text-[0.82rem] text-red-700">{formError}</p>}
+
+          {formError && <p className="text-[0.82rem] text-red-700 font-medium">{formError}</p>}
           <Button type="submit" variant="primary" className="justify-self-start" disabled={addMutation.isPending}>
             Add teammate →
           </Button>
           <p className="text-[0.76rem] text-ink-soft">
             They can log in at <a href="/login" className="text-marigold hover:underline">/login</a> with this
-            email and the default password <code className="mono rounded bg-paper-3 px-1.5 py-0.5">tm@123</code> —
-            with read-only access to the team.
+            email and default password <code className="mono rounded bg-paper-3 px-1.5 py-0.5">tm@123</code>.
           </p>
         </form>
       )}

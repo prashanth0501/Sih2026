@@ -17,7 +17,7 @@ type AuthContextValue = {
   user: User | null;
   ready: boolean;
   login: (email: string, password: string) => Promise<User>;
-  signup: (input: { name: string; email: string; password: string; department: string; year: number }) => Promise<User>;
+  signup: (input: { name: string; email: string; password: string; department: string; year: number; usn?: string }) => Promise<User>;
   logout: () => void;
 };
 
