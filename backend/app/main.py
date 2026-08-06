@@ -28,7 +28,10 @@ async def lifespan(app: FastAPI):
     except Exception as e:
         print(f"MongoDB lifespan startup notice: {e}")
     yield
-    mongo.client.close()
+    try:
+        mongo.client.close()
+    except Exception:
+        pass
 
 
 app = FastAPI(title=settings.app_name, lifespan=lifespan)
@@ -71,3 +74,8 @@ app.include_router(promotions.router)
 @app.get("/")
 def root():
     return {"name": settings.app_name, "docs": "/docs", "status": "online"}
+
+
+@app.get("/health")
+def health_check():
+    return {"status": "ok", "service": settings.app_name}
