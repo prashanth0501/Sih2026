@@ -112,23 +112,23 @@ export function Footer() {
           </div>
         </div>
 
-        {/* CREATIVE & STYLISH DEVELOPER CREDITS HIGHLIGHT */}
+        {/* CREATIVE DEVELOPER CREDITS (NO EMOJIS — CLEAN, STANDARD, HIGH-END STYLING) */}
         <div className="mt-12 flex flex-col gap-6 border-t border-paper/15 pt-8 text-[0.9rem] text-paper/70 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-center gap-3">
             <img src="/nagarjuna-logo.webp" alt="Nagarjuna College Logo" className="h-8 w-auto opacity-90" />
             <span className="text-[0.85rem]">© 2026 Nagarjuna College of Engineering &amp; Technology</span>
           </div>
 
-          {/* Glowing Developer Credit Pills */}
+          {/* Clean Developer Credit Pills */}
           <div className="flex flex-wrap items-center gap-2.5 text-[0.95rem]">
-            <span className="mono text-[0.78rem] text-paper/60 uppercase tracking-wide">Crafted &amp; Developed by</span>
+            <span className="mono text-[0.78rem] text-paper/60 uppercase tracking-wide">Developed by</span>
             <a
               href="https://www.linkedin.com/in/partha-shankar?utm_source=share_via&utm_content=profile&utm_medium=member_android"
               target="_blank"
               rel="noopener noreferrer"
               className="group inline-flex items-center gap-1.5 rounded-full border border-marigold/40 bg-marigold/10 px-3.5 py-1 font-display text-[0.92rem] font-bold text-marigold shadow-[0_0_15px_rgba(245,158,11,0.2)] transition-all hover:scale-105 hover:border-marigold hover:bg-marigold hover:text-ink"
             >
-              <span className="text-xs">⚡</span> Partha Shankar
+              <span className="mono text-xs font-bold">•</span> Partha Shankar
             </a>
             <span className="text-paper/40 font-mono">&amp;</span>
             <a
@@ -137,7 +137,7 @@ export function Footer() {
               rel="noopener noreferrer"
               className="group inline-flex items-center gap-1.5 rounded-full border border-marigold/40 bg-marigold/10 px-3.5 py-1 font-display text-[0.92rem] font-bold text-marigold shadow-[0_0_15px_rgba(245,158,11,0.2)] transition-all hover:scale-105 hover:border-marigold hover:bg-marigold hover:text-ink"
             >
-              <span className="text-xs">✨</span> Nirmith M Jain
+              <span className="mono text-xs font-bold">•</span> Nirmith M Jain
             </a>
           </div>
         </div>
