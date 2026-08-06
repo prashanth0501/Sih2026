@@ -32,6 +32,7 @@ client = AsyncIOMotorClient(
     uri,
     maxPoolSize=200,
     minPoolSize=20,
+    waitQueueTimeoutMS=5000,
     maxIdleTimeMS=45000,
     connectTimeoutMS=10000,
     serverSelectionTimeoutMS=10000,

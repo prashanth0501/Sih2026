@@ -41,7 +41,15 @@ import { ContentEditor } from '@/pages/admin/ContentEditor';
 
 import { ScrollToTop } from '@/components/ScrollToTop';
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 60_000, // 1 minute caching
+      refetchOnWindowFocus: false,
+      retry: 2,
+    },
+  },
+});
 
 const DASHBOARD_NAV = [
   { to: '/dashboard', label: 'Team status' },
