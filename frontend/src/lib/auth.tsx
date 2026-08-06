@@ -25,7 +25,7 @@ const AuthContext = createContext<AuthContextValue | null>(null);
 
 function persistToken(token: string, isStaff: boolean) {
   if (isStaff) {
-    // Admin & Staff sessions DO NOT persist across browser restarts/tab reopens
+    // Admin & Staff sessions live in sessionStorage (persists across page refreshes, expires when tab is closed)
     sessionStorage.setItem(TOKEN_KEY, token);
     localStorage.removeItem(TOKEN_KEY);
   } else {
@@ -39,7 +39,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
-    // Check sessionStorage first (for staff/admin sessions), then localStorage (for participants)
+    // Check sessionStorage (staff/admin) then localStorage (participants)
     const token = sessionStorage.getItem(TOKEN_KEY) || localStorage.getItem(TOKEN_KEY);
     if (!token) {
       setReady(true);
@@ -48,17 +48,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     apiMe()
       .then((me) => {
-        // If user is staff/admin but token was stored in localStorage, purge it so admin must log in again
-        if (ROLE_RANK[me.role] >= 1 && !sessionStorage.getItem(TOKEN_KEY)) {
-          localStorage.removeItem(TOKEN_KEY);
-          setUser(null);
-        } else {
-          setUser(me);
-        }
+        setUser(me);
       })
       .catch(() => {
         localStorage.removeItem(TOKEN_KEY);
         sessionStorage.removeItem(TOKEN_KEY);
+        setUser(null);
       })
       .finally(() => setReady(true));
   }, []);
