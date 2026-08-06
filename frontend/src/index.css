@@ -1,0 +1,216 @@
+@import "tailwindcss";
+
+@font-face {
+  font-family: 'Fraunces';
+  font-style: normal;
+  font-weight: 600 700;
+  font-display: swap;
+  src: url('/fonts/fraunces-600.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Plex Sans';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('/fonts/plexsans-400.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Plex Sans';
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url('/fonts/plexsans-600.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Plex Mono';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url('/fonts/plexmono-500.woff2') format('woff2');
+}
+
+@theme {
+  --color-ink: #241b3a;
+  --color-ink-soft: rgba(36, 27, 58, 0.64);
+  --color-paper: #fcf8ef;
+  --color-paper-2: #f5eee0;
+  --color-paper-3: #ece2cc;
+  --color-marigold: #ff7a1a;
+  --color-marigold-glow: #ffc177;
+  --color-indigo: #4a3ab4;
+  --color-indigo-glow: #9c90f2;
+  --color-spark: #ffa92e;
+  --color-spark-glow: #ffd98a;
+  --color-line: rgba(36, 27, 58, 0.13);
+
+  --font-display: 'Fraunces', ui-serif, Georgia, serif;
+  --font-body: 'Plex Sans', ui-sans-serif, system-ui, sans-serif;
+  --font-mono: 'Plex Mono', ui-monospace, monospace;
+}
+
+html {
+  scroll-behavior: smooth;
+  background: var(--color-paper);
+  min-height: 100%;
+}
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+}
+
+html,
+body {
+  overscroll-behavior-y: none;
+}
+
+body {
+  min-height: 100vh;
+}
+
+body {
+  margin: 0;
+  background: var(--color-paper);
+  color: var(--color-ink);
+  font-family: var(--font-body);
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+}
+
+h1,
+h2,
+h3 {
+  font-family: var(--font-display);
+  font-weight: 700;
+  text-wrap: balance;
+  letter-spacing: -0.01em;
+  margin: 0;
+}
+
+p {
+  margin: 0;
+}
+
+::selection {
+  background: var(--color-spark);
+  color: var(--color-paper);
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-marigold);
+  outline-offset: 3px;
+}
+
+.eyebrow {
+  font-family: var(--font-mono);
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  font-weight: 700;
+  font-size: 1.05rem;
+  color: var(--color-marigold);
+  text-shadow: 0 0 18px color-mix(in srgb, var(--color-marigold-glow) 55%, transparent);
+}
+@media (min-width: 640px) {
+  .eyebrow {
+    font-size: 1.3rem;
+  }
+}
+
+.lede {
+  color: var(--color-ink);
+  opacity: 0.88;
+  font-size: 1.12rem;
+  line-height: 1.7;
+  font-weight: 450;
+}
+@media (min-width: 640px) {
+  .lede {
+    font-size: 1.22rem;
+  }
+}
+
+.mono {
+  font-family: var(--font-mono);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.grain {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 2;
+  opacity: 0.045;
+  mix-blend-mode: multiply;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='120' height='120'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>");
+}
+
+/* Fills the wide-desktop margins either side of the centered content column
+   with a faint dot lattice instead of leaving them flat and empty. */
+.lattice {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  opacity: 0.5;
+  background-image: radial-gradient(circle, var(--color-line) 1.4px, transparent 1.4px);
+  background-size: 28px 28px;
+  mask-image: radial-gradient(ellipse 46% 100% at 50% 0%, transparent 60%, black 100%);
+  -webkit-mask-image: radial-gradient(ellipse 46% 100% at 50% 0%, transparent 60%, black 100%);
+}
+
+/* Running-head labels along the far edges — only where there's real margin
+   to put them in; invisible below the width they're designed for. */
+.margin-rail {
+  position: fixed;
+  top: 0;
+  bottom: 0;
+  z-index: 1;
+  display: none;
+  align-items: center;
+  pointer-events: none;
+}
+@media (min-width: 1500px) {
+  .margin-rail {
+    display: flex;
+  }
+}
+.margin-deco {
+  position: absolute;
+  z-index: 0;
+  display: none;
+  pointer-events: none;
+  opacity: 0.55;
+}
+@media (min-width: 1500px) {
+  .margin-deco {
+    display: block;
+  }
+}
+
+.margin-rail-text {
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: var(--color-ink-soft);
+  opacity: 0.45;
+  white-space: nowrap;
+  writing-mode: vertical-rl;
+}
+
+/* thread scroll-snap strip (mobile pipeline / theme chips) */
+.snap-x-strip {
+  display: flex;
+  gap: 14px;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+.snap-x-strip::-webkit-scrollbar {
+  display: none;
+}
+.snap-x-strip > * {
+  scroll-snap-align: start;
+}

@@ -1,0 +1,16 @@
+node_modules/
+dist/
+.env
+.env.local
+ADMIN_CREDENTIALS.md
+.claude/
+
+# backend
+backend/venv/
+backend/__pycache__/
+backend/**/__pycache__/
+*.pyc
+
+# frontend
+frontend/node_modules/
+frontend/dist/
