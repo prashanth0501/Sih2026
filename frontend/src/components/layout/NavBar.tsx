@@ -82,22 +82,22 @@ export function NavBar({ sidebarOpen, setSidebarOpen }: NavBarProps) {
   return (
     <>
       {/* Top Fixed Header Navbar */}
-      <header className="fixed inset-x-0 top-0 z-50 bg-paper/95 backdrop-blur-md border-b border-line/60 py-3 transition-all duration-200 shadow-xs">
-        <div className="mx-auto flex max-w-7xl items-center justify-between px-4 sm:px-8 gap-4">
+      <header className="fixed inset-x-0 top-0 z-50 bg-paper/95 backdrop-blur-md border-b border-line/60 py-2.5 sm:py-3 transition-all duration-200 shadow-xs">
+        <div className="mx-auto flex max-w-7xl items-center justify-between px-3 sm:px-8 gap-2 sm:gap-4">
           
           {/* Logo comes FIRST, followed by Menu Toggle button right beside it */}
-          <div className="flex items-center gap-3 shrink-0">
+          <div className="flex items-center gap-2 sm:gap-3 shrink-0">
             {/* 1. Brand Logo */}
-            <Link to="/" className="flex items-center gap-2.5 shrink-0 group">
+            <Link to="/" className="flex items-center gap-2 sm:gap-2.5 shrink-0 group">
               <img
                 src="/nagarjuna-logo.webp"
                 alt="Nagarjuna Logo"
-                className="h-9 w-auto sm:h-10 shrink-0 rounded-lg"
+                className="h-8 w-auto sm:h-10 shrink-0 rounded-md"
                 width={144}
                 height={144}
               />
-              <span className="flex items-center gap-2 shrink-0">
-                <span className="font-display text-lg sm:text-2xl font-bold tracking-tight text-ink">
+              <span className="flex items-center gap-1.5 sm:gap-2 shrink-0">
+                <span className="font-display text-base sm:text-2xl font-bold tracking-tight text-ink">
                   Ignite
                 </span>
                 <span className="hidden sm:inline-flex items-center mono rounded-full bg-marigold/15 border border-marigold/40 px-2.5 py-0.5 text-[0.68rem] font-bold text-marigold">
@@ -111,14 +111,14 @@ export function NavBar({ sidebarOpen, setSidebarOpen }: NavBarProps) {
               type="button"
               aria-label="Toggle menu"
               onClick={() => setSidebarOpen((o) => !o)}
-              className="flex items-center gap-2 rounded-full border border-line bg-paper-2 px-3.5 py-1.5 text-xs font-bold text-ink hover:border-marigold hover:text-marigold transition-all shrink-0 mono"
+              className="flex items-center gap-1.5 rounded-full border border-line bg-paper-2 px-2.5 py-1 sm:px-3.5 sm:py-1.5 text-xs font-bold text-ink hover:border-marigold hover:text-marigold transition-all shrink-0 mono"
             >
-              <span className="text-sm font-bold leading-none">{sidebarOpen ? '✕' : '☰'}</span>
+              <span className="text-xs sm:text-sm font-bold leading-none">{sidebarOpen ? '✕' : '☰'}</span>
               <span className="hidden md:inline text-[0.72rem] uppercase tracking-wider">Menu</span>
             </button>
           </div>
 
-          {/* Center Navigation Categories with Dropdowns (Clean, no emojis, no extra text underneath) */}
+          {/* Center Navigation Categories with Dropdowns */}
           <nav className="hidden lg:flex items-center gap-1 mono text-[0.82rem] font-semibold text-ink-soft shrink-0">
             <NavLink
               to="/"
@@ -149,7 +149,7 @@ export function NavBar({ sidebarOpen, setSidebarOpen }: NavBarProps) {
                   <span>{category.title}</span>
                 </button>
 
-                {/* Dropdown Menu Overlay — Clean list without extra descriptive text */}
+                {/* Dropdown Menu Overlay */}
                 {activeDropdown === category.title && (
                   <div className="absolute left-0 top-full mt-2 w-56 rounded-2xl border border-line/60 bg-paper backdrop-blur-xl p-2 shadow-xl z-50 space-y-0.5 animate-in fade-in slide-in-from-top-1 duration-150">
                     {category.links.map((link) => (
@@ -173,21 +173,21 @@ export function NavBar({ sidebarOpen, setSidebarOpen }: NavBarProps) {
             ))}
           </nav>
 
-          {/* Right Action Buttons — Big, Highlighted, Rounded Login & Register Buttons (NO emojis) */}
-          <div className="flex items-center gap-2 sm:gap-3 shrink-0 whitespace-nowrap">
+          {/* Right Action Buttons — Mobile Responsive */}
+          <div className="flex items-center gap-1.5 sm:gap-3 shrink-0">
             {user ? (
-              <div className="flex items-center gap-2.5 shrink-0 whitespace-nowrap">
+              <div className="flex items-center gap-2 shrink-0">
                 {hasRole(user, 'coordinator') ? (
                   <Link
                     to="/admin"
-                    className="mono inline-flex items-center rounded-full bg-marigold px-4 py-2 sm:px-5 sm:py-2.5 text-[0.8rem] sm:text-[0.85rem] font-bold text-paper transition-all hover:scale-105 hover:bg-marigold/90 shadow-sm"
+                    className="mono inline-flex items-center rounded-full bg-marigold px-3.5 py-1.5 sm:px-5 sm:py-2.5 text-xs sm:text-[0.85rem] font-bold text-paper transition-all hover:scale-105 hover:bg-marigold/90 shadow-sm"
                   >
-                    Admin Panel
+                    Admin
                   </Link>
                 ) : (
                   <Link
                     to="/dashboard"
-                    className="mono inline-flex items-center rounded-full bg-marigold px-4 py-2 sm:px-5 sm:py-2.5 text-[0.8rem] sm:text-[0.85rem] font-bold text-paper transition-all hover:scale-105 hover:bg-marigold/90 shadow-sm"
+                    className="mono inline-flex items-center rounded-full bg-marigold px-3.5 py-1.5 sm:px-5 sm:py-2.5 text-xs sm:text-[0.85rem] font-bold text-paper transition-all hover:scale-105 hover:bg-marigold/90 shadow-sm"
                   >
                     Dashboard
                   </Link>
@@ -200,21 +200,22 @@ export function NavBar({ sidebarOpen, setSidebarOpen }: NavBarProps) {
                 </button>
               </div>
             ) : (
-              <div className="flex items-center gap-2 sm:gap-3 shrink-0 whitespace-nowrap">
-                {/* BIGGER & HIGHLIGHTED LOGIN BUTTON */}
+              <div className="flex items-center gap-1.5 sm:gap-3 shrink-0">
+                {/* LOGIN BUTTON (Responsive) */}
                 <Link
                   to="/login"
-                  className="mono inline-flex items-center justify-center rounded-full border-2 border-ink/80 bg-paper px-4 py-2 text-[0.8rem] sm:px-5 sm:py-2.5 sm:text-[0.85rem] font-bold text-ink hover:border-marigold hover:text-marigold transition-all hover:scale-105 shadow-xs"
+                  className="mono inline-flex items-center justify-center rounded-full border-2 border-ink/80 bg-paper px-3 py-1.5 text-[0.75rem] sm:px-5 sm:py-2.5 sm:text-[0.85rem] font-bold text-ink hover:border-marigold hover:text-marigold transition-all hover:scale-105 shadow-xs"
                 >
                   Log in
                 </Link>
 
-                {/* BIGGER, HIGHLIGHTED REGISTER TEAM BUTTON */}
+                {/* REGISTER TEAM BUTTON (Responsive) */}
                 <Link
                   to="/register"
-                  className="mono inline-flex items-center justify-center rounded-full bg-marigold px-4.5 py-2 text-[0.8rem] sm:px-6 sm:py-2.5 sm:text-[0.88rem] font-bold text-paper transition-all hover:scale-105 hover:bg-marigold/90 shadow-md shadow-marigold/25"
+                  className="mono inline-flex items-center justify-center rounded-full bg-marigold px-3.5 py-1.5 text-[0.75rem] sm:px-6 sm:py-2.5 sm:text-[0.88rem] font-bold text-paper transition-all hover:scale-105 hover:bg-marigold/90 shadow-md shadow-marigold/25"
                 >
-                  Register Team
+                  <span className="sm:hidden">Register</span>
+                  <span className="hidden sm:inline">Register Team</span>
                 </Link>
               </div>
             )}
@@ -226,15 +227,15 @@ export function NavBar({ sidebarOpen, setSidebarOpen }: NavBarProps) {
       {sidebarOpen && (
         <div
           onClick={() => setSidebarOpen(false)}
-          className="fixed inset-0 top-16 z-40 bg-ink/40 backdrop-blur-xs transition-opacity"
+          className="fixed inset-0 top-14 sm:top-16 z-40 bg-ink/40 backdrop-blur-xs transition-opacity"
         />
       )}
 
-      {/* SLEEK DRAWER — Clean list without extra descriptions or emojis */}
+      {/* SLEEK DRAWER */}
       <aside
         ref={sidebarRef}
         className={cn(
-          'fixed top-16 left-0 bottom-0 z-50 flex w-76 max-w-[85vw] flex-col border-r border-line bg-paper p-5 shadow-2xl transition-transform duration-300 overflow-y-auto pointer-events-auto h-[calc(100vh-4rem)]',
+          'fixed top-14 sm:top-16 left-0 bottom-0 z-50 flex w-76 max-w-[85vw] flex-col border-r border-line bg-paper p-5 shadow-2xl transition-transform duration-300 overflow-y-auto pointer-events-auto h-[calc(100vh-3.5rem)] sm:h-[calc(100vh-4rem)]',
           sidebarOpen ? 'translate-x-0' : '-translate-x-full'
         )}
       >
