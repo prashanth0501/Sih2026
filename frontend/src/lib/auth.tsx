@@ -23,8 +23,15 @@ type AuthContextValue = {
 
 const AuthContext = createContext<AuthContextValue | null>(null);
 
-function persist(token: string) {
-  localStorage.setItem(TOKEN_KEY, token);
+function persistToken(token: string, isStaff: boolean) {
+  if (isStaff) {
+    // Admin & Staff sessions DO NOT persist across browser restarts/tab reopens
+    sessionStorage.setItem(TOKEN_KEY, token);
+    localStorage.removeItem(TOKEN_KEY);
+  } else {
+    localStorage.setItem(TOKEN_KEY, token);
+    sessionStorage.removeItem(TOKEN_KEY);
+  }
 }
 
 export function AuthProvider({ children }: { children: ReactNode }) {
@@ -32,14 +39,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
-    const token = localStorage.getItem(TOKEN_KEY);
+    // Check sessionStorage first (for staff/admin sessions), then localStorage (for participants)
+    const token = sessionStorage.getItem(TOKEN_KEY) || localStorage.getItem(TOKEN_KEY);
     if (!token) {
       setReady(true);
       return;
     }
+
     apiMe()
-      .then(setUser)
-      .catch(() => localStorage.removeItem(TOKEN_KEY))
+      .then((me) => {
+        // If user is staff/admin but token was stored in localStorage, purge it so admin must log in again
+        if (ROLE_RANK[me.role] >= 1 && !sessionStorage.getItem(TOKEN_KEY)) {
+          localStorage.removeItem(TOKEN_KEY);
+          setUser(null);
+        } else {
+          setUser(me);
+        }
+      })
+      .catch(() => {
+        localStorage.removeItem(TOKEN_KEY);
+        sessionStorage.removeItem(TOKEN_KEY);
+      })
       .finally(() => setReady(true));
   }, []);
 
@@ -49,19 +69,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       ready,
       async login(email, password) {
         const { access_token, user: loggedIn } = await apiLogin(email, password);
-        persist(access_token);
+        const isStaff = ROLE_RANK[loggedIn.role] >= 1;
+        persistToken(access_token, isStaff);
         setUser(loggedIn);
         return loggedIn;
       },
       async signup(input) {
         const { access_token, user: created } = await apiRegister(input);
-        persist(access_token);
+        persistToken(access_token, false);
         setUser(created);
         return created;
       },
       logout() {
         setUser(null);
         localStorage.removeItem(TOKEN_KEY);
+        sessionStorage.removeItem(TOKEN_KEY);
       },
     }),
     [user, ready]
