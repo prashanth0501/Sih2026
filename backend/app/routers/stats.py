@@ -7,18 +7,26 @@ from app.models.content import AdminStats, PublicStats
 router = APIRouter(prefix="/api/v1/stats", tags=["stats"])
 
 
+from app.core.cache import memory_cache
+
 @router.get("/public", response_model=PublicStats)
 async def public_stats():
+    cached = memory_cache.get("public_stats")
+    if cached:
+        return cached
+
     cursor = mongo.teams.find({})
     teams = await cursor.to_list(length=None)
     ideas = sum(1 for t in teams if t.get("level1", {}).get("submission_url"))
     ps_count = await mongo.problem_statements.count_documents({})
-    return PublicStats(
+    result = PublicStats(
         teams_registered=len(teams),
         ideas_submitted=ideas,
         problem_statements=ps_count,
         days_to_deadline=12,
     )
+    memory_cache.set("public_stats", result, ttl_seconds=30)
+    return result
 
 
 @router.get("/admin", response_model=AdminStats)
