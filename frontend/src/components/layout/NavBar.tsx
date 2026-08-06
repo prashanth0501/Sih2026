@@ -82,22 +82,22 @@ export function NavBar({ sidebarOpen, setSidebarOpen }: NavBarProps) {
   return (
     <>
       {/* Top Fixed Header Navbar */}
-      <header className="fixed inset-x-0 top-0 z-50 bg-paper/95 backdrop-blur-md border-b border-line/60 py-2.5 sm:py-3 transition-all duration-200 shadow-xs">
-        <div className="mx-auto flex max-w-7xl items-center justify-between px-3 sm:px-8 gap-2 sm:gap-4">
+      <header className="fixed inset-x-0 top-0 z-50 bg-paper/95 backdrop-blur-md border-b border-line/60 py-2 sm:py-3 transition-all duration-200 shadow-xs">
+        <div className="mx-auto flex max-w-7xl items-center justify-between px-2 sm:px-8 gap-1.5 sm:gap-4 overflow-hidden">
           
-          {/* Logo comes FIRST, followed by Menu Toggle button right beside it */}
-          <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+          {/* Logo + Menu Toggle */}
+          <div className="flex items-center gap-1.5 sm:gap-3 shrink">
             {/* 1. Brand Logo */}
-            <Link to="/" className="flex items-center gap-2 sm:gap-2.5 shrink-0 group">
+            <Link to="/" className="flex items-center gap-1.5 sm:gap-2.5 shrink group">
               <img
                 src="/nagarjuna-logo.webp"
                 alt="Nagarjuna Logo"
-                className="h-8 w-auto sm:h-10 shrink-0 rounded-md"
+                className="h-7 sm:h-10 w-auto shrink-0 rounded-md"
                 width={144}
                 height={144}
               />
-              <span className="flex items-center gap-1.5 sm:gap-2 shrink-0">
-                <span className="font-display text-base sm:text-2xl font-bold tracking-tight text-ink">
+              <span className="flex items-center gap-1 sm:gap-2 shrink">
+                <span className="font-display text-sm sm:text-2xl font-bold tracking-tight text-ink truncate">
                   Ignite
                 </span>
                 <span className="hidden sm:inline-flex items-center mono rounded-full bg-marigold/15 border border-marigold/40 px-2.5 py-0.5 text-[0.68rem] font-bold text-marigold">
@@ -106,15 +106,15 @@ export function NavBar({ sidebarOpen, setSidebarOpen }: NavBarProps) {
               </span>
             </Link>
 
-            {/* 2. Menu Toggle Button — Positioned right NEXT to logo */}
+            {/* 2. Menu Toggle Button */}
             <button
               type="button"
               aria-label="Toggle menu"
               onClick={() => setSidebarOpen((o) => !o)}
-              className="flex items-center gap-1.5 rounded-full border border-line bg-paper-2 px-2.5 py-1 sm:px-3.5 sm:py-1.5 text-xs font-bold text-ink hover:border-marigold hover:text-marigold transition-all shrink-0 mono"
+              className="flex items-center justify-center rounded-full border border-line bg-paper-2 h-7 w-7 sm:h-auto sm:w-auto sm:px-3.5 sm:py-1.5 text-xs font-bold text-ink hover:border-marigold hover:text-marigold transition-all shrink-0 mono"
             >
               <span className="text-xs sm:text-sm font-bold leading-none">{sidebarOpen ? '✕' : '☰'}</span>
-              <span className="hidden md:inline text-[0.72rem] uppercase tracking-wider">Menu</span>
+              <span className="hidden md:inline text-[0.72rem] uppercase tracking-wider ml-1.5">Menu</span>
             </button>
           </div>
 
@@ -173,21 +173,21 @@ export function NavBar({ sidebarOpen, setSidebarOpen }: NavBarProps) {
             ))}
           </nav>
 
-          {/* Right Action Buttons — Mobile Responsive */}
-          <div className="flex items-center gap-1.5 sm:gap-3 shrink-0">
+          {/* Right Action Buttons */}
+          <div className="flex items-center gap-1 sm:gap-3 shrink-0">
             {user ? (
-              <div className="flex items-center gap-2 shrink-0">
+              <div className="flex items-center gap-1.5 shrink-0">
                 {hasRole(user, 'coordinator') ? (
                   <Link
                     to="/admin"
-                    className="mono inline-flex items-center rounded-full bg-marigold px-3.5 py-1.5 sm:px-5 sm:py-2.5 text-xs sm:text-[0.85rem] font-bold text-paper transition-all hover:scale-105 hover:bg-marigold/90 shadow-sm"
+                    className="mono inline-flex items-center rounded-full bg-marigold px-3 py-1 sm:px-5 sm:py-2.5 text-[0.72rem] sm:text-[0.85rem] font-bold text-paper transition-all hover:scale-105 hover:bg-marigold/90 shadow-sm"
                   >
                     Admin
                   </Link>
                 ) : (
                   <Link
                     to="/dashboard"
-                    className="mono inline-flex items-center rounded-full bg-marigold px-3.5 py-1.5 sm:px-5 sm:py-2.5 text-xs sm:text-[0.85rem] font-bold text-paper transition-all hover:scale-105 hover:bg-marigold/90 shadow-sm"
+                    className="mono inline-flex items-center rounded-full bg-marigold px-3 py-1 sm:px-5 sm:py-2.5 text-[0.72rem] sm:text-[0.85rem] font-bold text-paper transition-all hover:scale-105 hover:bg-marigold/90 shadow-sm"
                   >
                     Dashboard
                   </Link>
@@ -200,22 +200,21 @@ export function NavBar({ sidebarOpen, setSidebarOpen }: NavBarProps) {
                 </button>
               </div>
             ) : (
-              <div className="flex items-center gap-1.5 sm:gap-3 shrink-0">
-                {/* LOGIN BUTTON (Responsive) */}
+              <div className="flex items-center gap-1 sm:gap-2.5 shrink-0">
+                {/* LOGIN BUTTON */}
                 <Link
                   to="/login"
-                  className="mono inline-flex items-center justify-center rounded-full border-2 border-ink/80 bg-paper px-3 py-1.5 text-[0.75rem] sm:px-5 sm:py-2.5 sm:text-[0.85rem] font-bold text-ink hover:border-marigold hover:text-marigold transition-all hover:scale-105 shadow-xs"
+                  className="mono inline-flex items-center justify-center rounded-full border-2 border-ink/80 bg-paper px-2 py-1 text-[0.68rem] min-[360px]:px-2.5 min-[360px]:py-1 sm:px-5 sm:py-2.5 sm:text-[0.85rem] font-bold text-ink hover:border-marigold hover:text-marigold transition-all shadow-xs"
                 >
                   Log in
                 </Link>
 
-                {/* REGISTER TEAM BUTTON (Responsive) */}
+                {/* REGISTER TEAM BUTTON */}
                 <Link
                   to="/register"
-                  className="mono inline-flex items-center justify-center rounded-full bg-marigold px-3.5 py-1.5 text-[0.75rem] sm:px-6 sm:py-2.5 sm:text-[0.88rem] font-bold text-paper transition-all hover:scale-105 hover:bg-marigold/90 shadow-md shadow-marigold/25"
+                  className="mono inline-flex items-center justify-center rounded-full bg-marigold px-2.5 py-1 text-[0.68rem] min-[360px]:px-3 min-[360px]:py-1 sm:px-6 sm:py-2.5 sm:text-[0.88rem] font-bold text-paper transition-all hover:scale-105 hover:bg-marigold/90 shadow-md shadow-marigold/25"
                 >
-                  <span className="sm:hidden">Register</span>
-                  <span className="hidden sm:inline">Register Team</span>
+                  Register
                 </Link>
               </div>
             )}
@@ -239,30 +238,12 @@ export function NavBar({ sidebarOpen, setSidebarOpen }: NavBarProps) {
           sidebarOpen ? 'translate-x-0' : '-translate-x-full'
         )}
       >
-        {/* Header */}
-        <div className="flex items-center justify-between border-b border-line pb-3.5">
-          <div className="flex items-center gap-2.5">
-            <img src="/nagarjuna-logo.webp" alt="Logo" className="h-7 w-auto rounded" />
-            <div>
-              <div className="font-display text-base font-bold text-ink leading-none">
-                SIH 2026 Portal
-              </div>
-            </div>
-          </div>
-          <button
-            onClick={() => setSidebarOpen(false)}
-            className="flex h-8 w-8 items-center justify-center rounded-full border border-line bg-paper-2 text-ink hover:bg-paper-3 text-xs font-bold transition-all"
-          >
-            ✕
-          </button>
-        </div>
-
-        {/* Drawer Quick Action Buttons */}
-        <div className="mt-4 grid grid-cols-2 gap-2">
+        {/* Quick Action Buttons */}
+        <div className="grid grid-cols-2 gap-2 pb-2">
           <Link
             to="/register"
             onClick={() => setSidebarOpen(false)}
-            className="mono text-center rounded-xl bg-marigold px-3 py-2.5 text-[0.78rem] font-bold text-paper"
+            className="mono text-center rounded-xl bg-marigold px-3 py-2.5 text-[0.78rem] font-bold text-paper shadow-sm"
           >
             Register Team
           </Link>
@@ -276,7 +257,7 @@ export function NavBar({ sidebarOpen, setSidebarOpen }: NavBarProps) {
         </div>
 
         {/* Drawer Categories & Links */}
-        <div className="mt-5 space-y-5">
+        <div className="mt-4 space-y-5">
           {NAV_CATEGORIES.map((category) => (
             <div key={category.title}>
               <div className="mono text-[0.65rem] font-bold uppercase tracking-wider text-marigold mb-2 border-b border-line/30 pb-1">

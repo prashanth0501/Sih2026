@@ -112,34 +112,43 @@ export function Footer() {
           </div>
         </div>
 
-        {/* CREATIVE DEVELOPER CREDITS (NO EMOJIS — CLEAN, STANDARD, HIGH-END STYLING) */}
-        <div className="mt-12 flex flex-col gap-6 border-t border-paper/15 pt-8 text-[0.9rem] text-paper/70 sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex items-center gap-3">
-            <img src="/nagarjuna-logo.webp" alt="Nagarjuna College Logo" className="h-8 w-auto opacity-90" />
-            <span className="text-[0.85rem]">© 2026 Nagarjuna College of Engineering &amp; Technology</span>
+        {/* CREATIVE DEVELOPER CREDITS — Modern Glassmorphism Pill Container */}
+        <div className="mt-12 flex flex-col items-center text-center border-t border-paper/15 pt-8 pb-4 space-y-4 sm:flex-row sm:justify-between sm:text-left sm:space-y-0">
+          
+          {/* College Branding */}
+          <div className="flex items-center justify-center gap-2.5">
+            <img src="/nagarjuna-logo.webp" alt="Nagarjuna College Logo" className="h-7 sm:h-8 w-auto opacity-90" />
+            <span className="text-xs sm:text-[0.85rem] text-paper/75 font-medium">
+              © 2026 Nagarjuna College of Engineering &amp; Technology
+            </span>
           </div>
 
-          {/* Clean Developer Credit Pills */}
-          <div className="flex flex-wrap items-center gap-2.5 text-[0.95rem]">
-            <span className="mono text-[0.78rem] text-paper/60 uppercase tracking-wide">Developed by</span>
-            <a
-              href="https://www.linkedin.com/in/partha-shankar?utm_source=share_via&utm_content=profile&utm_medium=member_android"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="group inline-flex items-center gap-1.5 rounded-full border border-marigold/40 bg-marigold/10 px-3.5 py-1 font-display text-[0.92rem] font-bold text-marigold shadow-[0_0_15px_rgba(245,158,11,0.2)] transition-all hover:scale-105 hover:border-marigold hover:bg-marigold hover:text-ink"
-            >
-              <span className="mono text-xs font-bold">•</span> Partha Shankar
-            </a>
-            <span className="text-paper/40 font-mono">&amp;</span>
-            <a
-              href="https://www.linkedin.com/in/nirmith-m-jain-3126b027a?utm_source=share_via&utm_content=profile&utm_medium=member_android"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="group inline-flex items-center gap-1.5 rounded-full border border-marigold/40 bg-marigold/10 px-3.5 py-1 font-display text-[0.92rem] font-bold text-marigold shadow-[0_0_15px_rgba(245,158,11,0.2)] transition-all hover:scale-105 hover:border-marigold hover:bg-marigold hover:text-ink"
-            >
-              <span className="mono text-xs font-bold">•</span> Nirmith M Jain
-            </a>
+          {/* Unified Developer Pill (Single glassmorphism pill, zero broken wrapping) */}
+          <div className="flex flex-col items-center gap-1.5 sm:flex-row sm:gap-3">
+            <span className="mono text-[0.65rem] sm:text-[0.75rem] text-marigold uppercase tracking-wider font-bold">
+              Developed by
+            </span>
+            <div className="inline-flex items-center justify-center gap-2 rounded-full border border-marigold/40 bg-marigold/10 px-4 py-1.5 text-xs sm:text-sm font-bold text-marigold shadow-[0_0_15px_rgba(245,158,11,0.15)] backdrop-blur-sm">
+              <a
+                href="https://www.linkedin.com/in/partha-shankar?utm_source=share_via&utm_content=profile&utm_medium=member_android"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="hover:underline hover:text-paper transition-colors"
+              >
+                Partha Shankar
+              </a>
+              <span className="text-paper/40 font-mono text-xs">&amp;</span>
+              <a
+                href="https://www.linkedin.com/in/nirmith-m-jain-3126b027a?utm_source=share_via&utm_content=profile&utm_medium=member_android"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="hover:underline hover:text-paper transition-colors"
+              >
+                Nirmith M Jain
+              </a>
+            </div>
           </div>
+
         </div>
       </div>
     </footer>
