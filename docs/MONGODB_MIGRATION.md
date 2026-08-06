@@ -1,5 +1,9 @@
 # MongoDB Migration Guide
 
+> ✅ **STATUS: MIGRATION COMPLETED TO PRODUCTION MONGO ATLAS**
+> 
+> The MongoDB Atlas migration has been fully executed. `backend/app/db/memory.py` has been deleted and replaced with `backend/app/db/mongo.py` using Motor async driver connected to live Atlas database (`ignite_sih`). All routers (`auth`, `teams`, `screening`, `problem_statements`, `announcements`, `content`, `promotions`, `results`, `stats`), dependencies (`deps.py`), and state machine services (`screening.py`) have been converted to `async def` Motor calls.
+
 This is the A-to-Z plan for replacing `backend/app/db/memory.py` with real MongoDB
 (Atlas) storage via Motor. It exists because `docs/ARCHITECTURE.md` promises "swap
 this module for a real `db/mongo.py` … when you're ready" — this doc is that moment,

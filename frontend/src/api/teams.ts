@@ -6,6 +6,7 @@ export type ApiTeamMember = {
   department: string;
   year: number;
   role: string;
+  github_url?: string;
 };
 
 export type ApiScreeningRound = {
@@ -28,8 +29,12 @@ export type ApiTeam = {
   level2: ApiScreeningRound;
 };
 
-export async function createTeam(input: { name: string; theme?: string }) {
-  const { data } = await api.post<ApiTeam>('/teams', { name: input.name, theme: input.theme || null });
+export async function createTeam(input: { name: string; theme?: string; members?: ApiTeamMember[] }) {
+  const { data } = await api.post<ApiTeam>('/teams', {
+    name: input.name,
+    theme: input.theme || null,
+    members: input.members || [],
+  });
   return data;
 }
 
@@ -60,5 +65,14 @@ export async function setTeamLock(teamId: string, locked: boolean) {
 
 export async function submitLevel(teamId: string, level: 1 | 2, submission_url: string) {
   const { data } = await api.post<ApiTeam>(`/teams/${teamId}/submissions`, { level, submission_url });
+  return data;
+}
+
+export async function reviewScreening(teamId: string, level: 1 | 2, input: { score: number; feedback?: string; pass: boolean }) {
+  const { data } = await api.post<ApiTeam>(`/teams/${teamId}/screening/${level}/review`, {
+    score: input.score,
+    feedback: input.feedback || '',
+    pass: input.pass,
+  });
   return data;
 }

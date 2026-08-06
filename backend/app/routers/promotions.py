@@ -59,26 +59,6 @@ async def list_promo_posts():
     return result
 
 
-@router.post("/{promo_id}/shares", response_model=PromoSharePublic, status_code=status.HTTP_201_CREATED)
-async def submit_share(promo_id: str, body: PromoShareCreate):
-    promo = await mongo.promo_posts.find_one({"_id": promo_id})
-    if not promo:
-        raise HTTPException(status.HTTP_404_NOT_FOUND, "Promo post not found")
-
-    sid = mongo.new_id("share")
-    record = {
-        "_id": sid,
-        "id": sid,
-        **body.model_dump(),
-        "promo_post_id": promo_id,
-        "platform": detect_platform(body.post_url),
-        "submitted_at": mongo.now_iso(),
-    }
-    await mongo.promo_shares.insert_one(record)
-    count = await _share_count(promo_id)
-    return {**record, "count_for_post": count}
-
-
 @router.get("/shares", response_model=list[PromoSharePublic])
 async def list_all_shares(_coordinator: dict = Depends(require_role("coordinator"))):
     cursor = mongo.promo_shares.find({}).sort("submitted_at", -1)
@@ -90,14 +70,6 @@ async def list_all_shares(_coordinator: dict = Depends(require_role("coordinator
     return result
 
 
-@router.get("/{promo_id}/shares", response_model=list[PromoSharePublic])
-async def list_shares(promo_id: str, _coordinator: dict = Depends(require_role("coordinator"))):
-    cursor = mongo.promo_shares.find({"promo_post_id": promo_id})
-    shares = await cursor.to_list(length=None)
-    count = await _share_count(promo_id)
-    return [{**s, "count_for_post": count} for s in shares]
-
-
 @router.get("/wall", response_model=list[PromoSharePublic])
 async def public_wall():
     cursor = mongo.promo_shares.find({"is_public_on_wall": True}).sort("submitted_at", -1)
@@ -107,3 +79,20 @@ async def public_wall():
         count = await _share_count(s["promo_post_id"])
         result.append({**s, "count_for_post": count})
     return result
+
+
+@router.get("/{promo_id}", response_model=PromoPostPublic)
+async def get_promo_post(promo_id: str):
+    p = await mongo.promo_posts.find_one({"_id": promo_id})
+    if not p:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Promo post not found")
+    count = await _share_count(p["id"])
+    return {**p, "share_count": count}
+
+
+@router.get("/{promo_id}/shares", response_model=list[PromoSharePublic])
+async def list_shares(promo_id: str, _coordinator: dict = Depends(require_role("coordinator"))):
+    cursor = mongo.promo_shares.find({"promo_post_id": promo_id}).sort("submitted_at", -1)
+    shares = await cursor.to_list(length=None)
+    count = await _share_count(promo_id)
+    return [{**s, "count_for_post": count} for s in shares]

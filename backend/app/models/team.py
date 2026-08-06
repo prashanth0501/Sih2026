@@ -1,6 +1,6 @@
 from typing import Literal
 
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel, ConfigDict, EmailStr, Field
 
 ScreeningStatus = Literal[
     "registered",
@@ -35,11 +35,14 @@ class TeamMember(BaseModel):
     department: str
     year: int
     role: str = "member"
+    github_url: str = ""
 
 
 class TeamCreate(BaseModel):
     name: str
     theme: str | None = None
+    leader_github_url: str = ""
+    members: list[TeamMember] = []
 
 
 class ScreeningRound(BaseModel):
@@ -73,10 +76,18 @@ class SubmissionCreate(BaseModel):
 
 
 class ReviewDecision(BaseModel):
-    score: int
-    feedback: str
-    pass_: bool
+    score: int = 80
+    feedback: str = ""
+    pass_: bool = Field(default=True, alias="pass")
+
+    model_config = ConfigDict(populate_by_name=True)
 
 
 class LockUpdate(BaseModel):
     locked: bool
+
+
+class SystemSettings(BaseModel):
+    registration_open: bool = True
+    level1_open: bool = True
+    level2_open: bool = True

@@ -1,3 +1,4 @@
+import re
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 
 from app.core.deps import get_current_user, require_role
@@ -24,12 +25,18 @@ def _require_unlocked(team: dict) -> None:
 
 @router.post("", response_model=TeamPublic, status_code=status.HTTP_201_CREATED)
 async def create_team(body: TeamCreate, user: dict = Depends(get_current_user)):
+    sys_settings = await mongo.get_system_settings()
+    if not sys_settings.get("registration_open", True):
+        raise HTTPException(status.HTTP_403_FORBIDDEN, "Registrations are currently closed by the admin.")
+
     existing = await mongo.teams.find_one({"leader_id": user["id"]})
     if existing:
         raise HTTPException(status.HTTP_409_CONFLICT, "You already lead a team")
 
     tid = mongo.new_id("team")
     now = mongo.now_iso()
+    members_list = [m.model_dump() for m in body.members]
+
     team = {
         "_id": tid,
         "id": tid,
@@ -37,7 +44,7 @@ async def create_team(body: TeamCreate, user: dict = Depends(get_current_user)):
         "leader_id": user["id"],
         "problem_statement_id": None,
         "theme": body.theme,
-        "members": [],
+        "members": members_list,
         "status": "registered",
         "is_locked": False,
         "level1": {"status": "pending", "score": None, "feedback": None, "submission_url": None, "reviewer_id": None, "reviewed_at": None},
@@ -46,6 +53,11 @@ async def create_team(body: TeamCreate, user: dict = Depends(get_current_user)):
         "updated_at": now,
     }
     await mongo.teams.insert_one(team)
+
+    # Ensure login accounts for members
+    for m in body.members:
+        await mongo.ensure_member_login(m.name, m.email, m.department, m.year)
+
     return team
 
 
@@ -56,14 +68,11 @@ async def my_team(user: dict = Depends(get_current_user)):
         return {**team, "viewer_is_leader": True}
 
     email = user["email"].lower()
-    team = await mongo.teams.find_one({"members.email": {"$regex": f"^{email}$", "$options": "i"}})
+    team = await mongo.teams.find_one({"members.email": {"$regex": f"^{re.escape(email)}$", "$options": "i"}})
     if team:
         return {**team, "viewer_is_leader": False}
 
     raise HTTPException(status.HTTP_404_NOT_FOUND, "You're not on a team yet")
-
-
-import re
 
 
 @router.get("", response_model=list[TeamPublic])
@@ -71,7 +80,7 @@ async def list_teams(
     status_filter: str | None = Query(None, alias="status"),
     q: str | None = None,
     page: int = 1,
-    page_size: int = 25,
+    page_size: int = 200,
     user: dict = Depends(require_role("coordinator")),
 ):
     query = {}
@@ -144,5 +153,12 @@ async def submit(team_id: str, body: SubmissionCreate, user: dict = Depends(get_
     if team["leader_id"] != user["id"]:
         raise HTTPException(status.HTTP_403_FORBIDDEN, "Only the team leader can submit")
     _require_unlocked(team)
+
+    sys_settings = await mongo.get_system_settings()
+    if body.level == 1 and not sys_settings.get("level1_open", True):
+        raise HTTPException(status.HTTP_403_FORBIDDEN, "Level 1 submissions are currently closed by the admin.")
+    if body.level == 2 and not sys_settings.get("level2_open", True):
+        raise HTTPException(status.HTTP_403_FORBIDDEN, "Level 2 submissions are currently closed by the admin.")
+
     updated_team = await screening.submit_level(team, body.level, body.submission_url, user["id"])
     return updated_team

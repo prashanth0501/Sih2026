@@ -39,6 +39,7 @@ content = db["content"]
 audit_log = db["audit_log"]
 promo_posts = db["promo_posts"]
 promo_shares = db["promo_shares"]
+system_settings = db["system_settings"]
 
 
 import re
@@ -219,3 +220,30 @@ async def seed() -> None:
 
     for p in promos:
         await promo_posts.insert_one(p)
+
+
+async def get_system_settings() -> dict:
+    settings_doc = await system_settings.find_one({"_id": "global_settings"})
+    if not settings_doc:
+        settings_doc = {
+            "_id": "global_settings",
+            "id": "global_settings",
+            "registration_open": True,
+            "level1_open": True,
+            "level2_open": True,
+            "updated_at": now_iso(),
+        }
+        await system_settings.insert_one(settings_doc)
+    return settings_doc
+
+
+async def update_system_settings(updates: dict) -> dict:
+    from pymongo import ReturnDocument
+    updates["updated_at"] = now_iso()
+    doc = await system_settings.find_one_and_update(
+        {"_id": "global_settings"},
+        {"$set": updates},
+        upsert=True,
+        return_document=ReturnDocument.AFTER,
+    )
+    return doc or await get_system_settings()

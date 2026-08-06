@@ -1,78 +1,72 @@
-# Frontend
+# Frontend Architecture & Component Implementation
 
-React 19 + TypeScript, built with Vite, styled with Tailwind CSS v4. No SSR, no meta-framework — it's a client-rendered SPA behind React Router.
+React 19 + TypeScript, built with Vite, styled with Vanilla CSS design tokens & Tailwind CSS. Client-rendered SPA powered by React Router and TanStack Query.
 
-## Directory structure
+## Directory Structure
 
 ```
 frontend/src/
-  api/            axios calls to the backend (client.ts holds the JWT interceptor)
+  api/            Axios API client with JWT interceptor & rate-limit error handlers
+    client.ts, auth.ts, teams.ts, screening.ts, stats.ts, settings.ts, promotions.ts
   components/
     layout/       NavBar, Footer, PublicLayout, AppShell
     ui/           Button, StatusBadge, StatCounter, FlipCard
-    icons.tsx      shared inline SVG icon components
-    SparkThread.tsx    the scroll-linked SVG thread (landing/public pages only)
-    Reveal.tsx     whileInView fade+slide wrapper, used on almost every page
-    AdminGate.tsx  the /admin route guard (see below)
-    ProtectedRoute.tsx  the /dashboard route guard
+    icons.tsx      Shared inline SVG icon components
+    SparkThread.tsx Overflow-bounded scroll-linked SVG thread (Landing & Public pages)
+    Reveal.tsx     whileInView motion wrapper
+    AdminGate.tsx  /admin gate wrapper
+    ProtectedRoute.tsx /dashboard route guard
   lib/
-    auth.tsx       AuthContext — login/signup/logout, reads real API
-    data.ts        static/derived content: problem themes, people, timeline, mock roster
+    auth.tsx       AuthContext — JWT auth & role permission checks
+    data.ts        Static content: problem themes, people, timeline, rules
     utils.ts       cn(), detectPlatform(), initials()
   pages/
-    public/        16 routes, see below
-    dashboard/      participant-only
-    admin/          coordinator+ only
-  App.tsx           route table
-  index.css         design tokens + global styles (see docs/DESIGN_SYSTEM.md)
+    public/        16 public routes
+    dashboard/     Participant Team Dashboard & Submissions
+    admin/         Coordinator & SPOC Admin Console
+  App.tsx          App routes
+  index.css        Design tokens & responsive typography
 ```
 
-## Route table (`App.tsx`)
+---
 
-**Public** (wrapped in `PublicLayout`: grain overlay, `SparkThread`, `NavBar`, `Footer`):
-`/`, `/why-sih`, `/why-join`, `/timeline`, `/problem-statements`, `/rules`, `/spark-story`, `/people`, `/developers`, `/updates`, `/spread-the-spark`, `/results`, `/faq`, `/contact`, `/login`, `/register`, `/privacy`.
+## Route Table (`App.tsx`)
 
-**Dashboard** (wrapped in `ProtectedRoute minimumRole="participant"` → `AppShell`):
-`/dashboard`, `/dashboard/members`, `/dashboard/submissions`, `/dashboard/announcements`.
+- **Public Routes** (wrapped in `PublicLayout`):
+  `/`, `/why-sih`, `/why-join`, `/timeline`, `/problem-statements`, `/rules`, `/spark-story`, `/people`, `/developers`, `/updates`, `/spread-the-spark`, `/results`, `/faq`, `/contact`, `/login`, `/register`, `/privacy`.
 
-**Admin** (wrapped in `AdminGate`, not `ProtectedRoute` — see below):
-`/admin`, `/admin/registrations`, `/admin/screening`, `/admin/promotions`, `/admin/updates`, `/admin/content`.
+- **Participant Dashboard** (wrapped in `ProtectedRoute` → `AppShell`):
+  `/dashboard`, `/dashboard/members`, `/dashboard/submissions`, `/dashboard/announcements`.
 
-## Two login surfaces, one auth endpoint
+- **Admin Console** (wrapped in `AdminGate` → `AppShell`):
+  `/admin`, `/admin/teams` (Lock), `/admin/registrations`, `/admin/screening` (Console & Toggles), `/admin/promotions`, `/admin/updates`, `/admin/content`.
 
-`AdminGate` (`components/AdminGate.tsx`) is intentionally different from `ProtectedRoute`:
+---
 
-```
-if (!ready) return null
-if (!user) return <AdminLogin />              // renders the login form in place — no redirect
-if (!hasRole(user, 'coordinator')) return <AdminLogin denied />   // logged in, but not staff
-return <Outlet />
-```
+## Key Workflows & Features
 
-There is no nav link to `/admin` anywhere for logged-out visitors — reaching it means typing the URL. `AdminLogin.tsx` and the public `Login.tsx` both call the same `login()` from `AuthContext`, but each one checks the returned role and calls `logout()` immediately if it doesn't belong on that surface, then shows the same generic error either page would show for bad credentials. Neither page ever reveals whether an email/role combination exists.
+### 1. Team Registration & Compulsory Member GitHub URLs ([`Register.tsx`](file:///d:/sih2026/frontend/src/pages/public/Register.tsx))
+- **GitHub URLs**: Requires a valid GitHub profile URL (`github_url`) for the team leader and **every team member** added during registration.
+- **Admin Settings Enforcement**: Displays a clean "Registrations Are Closed" banner if `registration_open === false` in system settings.
 
-## State management
+### 2. Level 1 Google Drive PPT Submissions & Gated Level 2 ([`Submissions.tsx`](file:///d:/sih2026/frontend/src/pages/dashboard/Submissions.tsx))
+- **Level 1**: Expects shared Google Drive presentation link (`submission_url`).
+- **Gated Progression**: Level 2 submission & details are **strictly locked** (`🔒 Locked`) until a team's Level 1 PPT is selected and cleared (`l1_cleared`) by admin screening.
 
-- **Auth**: `lib/auth.tsx` — a React Context wrapping the real `/auth/*` endpoints. Token lives in `localStorage` (`ignite.auth.token`); an axios interceptor in `api/client.ts` attaches it to every request.
-- **Server data**: TanStack Query (`useQuery`/`useMutation`) for anything backend-backed — team data, promo posts/shares, registrations. `queryClient.invalidateQueries` after mutations (e.g. adding a team member, publishing a promo post).
-- **Everything else**: local `useState`, no global store. There's no Redux/Zustand — the app doesn't need it.
+### 3. Streamlined Admin Screening Console ([`ScreeningConsole.tsx`](file:///d:/sih2026/frontend/src/pages/admin/ScreeningConsole.tsx))
+- **Portal Control Toggles**: Admins toggle `registration_open`, `level1_open`, and `level2_open` in real-time.
+- **Google Drive PPT Button**: One-click **`📂 Open PPT in Google Drive ↗`** opens student presentation decks directly in a new tab.
+- **Inline Scoring**: Admin enters score (0–100), adds reviewer notes, and clicks **`SELECT / CLEAR LEVEL 1 ✓`** or **`REJECT ✕`**.
 
-## Mock vs. real data — the important distinction
+---
 
-`lib/data.ts` holds two categories of content that look similar but are not:
+## 100% Live Backend Integration
 
-1. **Genuinely static content** — problem theme descriptions, the timeline phases, people bios, the 18 theme images. This is real content, just not something that needs a database row (nobody edits it through the admin panel yet).
-2. **`TEAMS` — a synthetic 1,247-row roster**, generated with a seeded PRNG (`mulberry32`) so it's stable across reloads. This exists *specifically* to demonstrate the admin **Registrations** table (search/filter/pagination) at realistic scale, since the real backend's in-memory store starts empty. `getMyTeam(email)` derives a deterministic "team" from a hash of the logged-in email for the dashboard's status view — it is not the team that email actually registered.
+All admin pages (`AdminHome`, `Registrations`, `ScreeningConsole`, `TeamLock`) are 100% connected to live MongoDB API endpoints. `TEAMS` mock arrays are replaced with live query hooks (`useQuery`) refetching dynamic data from `/api/v1/teams` and `/api/v1/stats/admin`.
 
-Everything else — auth, team creation/members, submissions, screening decisions, promotions/shares, stats — talks to the real FastAPI backend. When wiring the dashboard/admin views to a real database, `TEAMS` and `getMyTeam` are the two things to delete; every real page already has a comment noting the endpoint it should call.
+---
 
-## Key interaction patterns
+## Responsiveness & Design System
 
-- **`.eyebrow` / `.lede`** (in `index.css`) — every page's small kicker label and intro paragraph use these two classes, not one-off Tailwind strings, specifically so a global size/color change (this happened once already, per user feedback) is a two-line CSS edit, not a 16-file find-and-replace.
-- **`Reveal`** — a thin wrapper around Framer Motion's `whileInView`, used instead of scattering animation props across every page.
-- **Circular "spotlight" portraits, not boxed cards** — People, Developers, and Contact all use the same photo treatment (glow ring behind a circular photo) instead of a bordered rectangle. This was a deliberate redesign after early versions used square cards.
-- **Mobile gets different components, not just breakpoints** — the pipeline steps on the landing page become a horizontal snap-scroll strip (`.snap-x-strip`) below 900px instead of a shrunk grid; the problem-theme orbit (in the original concept mockups) became a chip strip on narrow screens.
-
-## Fonts
-
-Fraunces (display), IBM Plex Sans (body), IBM Plex Mono (eyebrows/data) — self-hosted as `.woff2` files in `frontend/public/fonts/`, loaded via `@font-face` in `index.css`. Not loaded from Google Fonts at runtime (the original concept mockups inlined them as base64 for the same reason: no external font CDN at request time).
+- **Primary Navbar & Drawer**: Top header features key links (`Home`, `Explorer`, `Timeline`, `Results`, `Dashboard`/`Admin`, `Register`). The toggle button (`✦`) opens an expanded slide-out drawer on all screens.
+- **AppShell**: Responsive sidebar for desktop (`w-60`) + mobile top bar with horizontal scrollable sub-nav strip & sliding drawer.

@@ -35,6 +35,7 @@ import { TeamLock } from '@/pages/admin/TeamLock';
 import { Registrations } from '@/pages/admin/Registrations';
 import { ScreeningConsole } from '@/pages/admin/ScreeningConsole';
 import { PromotionComposer } from '@/pages/admin/PromotionComposer';
+import { PromoPostDetails } from '@/pages/admin/PromoPostDetails';
 import { UpdatesComposer } from '@/pages/admin/UpdatesComposer';
 import { ContentEditor } from '@/pages/admin/ContentEditor';
 
@@ -101,6 +102,7 @@ function App() {
                 <Route path="registrations" element={<Registrations />} />
                 <Route path="screening" element={<ScreeningConsole />} />
                 <Route path="promotions" element={<PromotionComposer />} />
+                <Route path="promotions/:postId" element={<PromoPostDetails />} />
                 <Route path="updates" element={<UpdatesComposer />} />
                 <Route path="content" element={<ContentEditor />} />
               </Route>

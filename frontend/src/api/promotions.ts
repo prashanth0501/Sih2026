@@ -12,7 +12,8 @@ export type ApiPromoPost = {
 export type ApiPromoShare = {
   id: string;
   promo_post_id: string;
-  name: string;
+  student_name?: string;
+  name?: string;
   usn: string;
   platform: string;
   post_url: string;
@@ -26,16 +27,32 @@ export async function getPromoPosts() {
   return data;
 }
 
+export async function getPromoPost(promoId: string) {
+  const { data } = await api.get<ApiPromoPost>(`/promotions/${promoId}`);
+  return data;
+}
+
 export async function submitPromoShare(
   promoId: string,
-  input: { name: string; usn: string; post_url: string; is_public_on_wall?: boolean }
+  input: { student_name?: string; name?: string; usn: string; post_url: string; is_public_on_wall?: boolean }
 ) {
-  const { data } = await api.post<ApiPromoShare>(`/promotions/${promoId}/shares`, input);
+  const payload = {
+    student_name: input.student_name || input.name || '',
+    usn: input.usn,
+    post_url: input.post_url,
+    is_public_on_wall: input.is_public_on_wall ?? true,
+  };
+  const { data } = await api.post<ApiPromoShare>(`/promotions/${promoId}/shares`, payload);
   return data;
 }
 
 export async function getAllPromoShares() {
   const { data } = await api.get<ApiPromoShare[]>('/promotions/shares');
+  return data;
+}
+
+export async function getPromoSharesForPost(promoId: string) {
+  const { data } = await api.get<ApiPromoShare[]>(`/promotions/${promoId}/shares`);
   return data;
 }
 
