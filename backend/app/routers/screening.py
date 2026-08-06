@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 
 from app.core.deps import require_role
-from app.db import memory
+from app.db import mongo
 from app.models.team import ReviewDecision, TeamPublic
 from app.services import screening
 
@@ -9,8 +9,8 @@ router = APIRouter(prefix="/api/v1/teams", tags=["screening"])
 
 
 @router.post("/{team_id}/screening/{level}/review", response_model=TeamPublic)
-def review(team_id: str, level: int, body: ReviewDecision, user: dict = Depends(require_role("coordinator"))):
-    team = memory.teams.get(team_id)
+async def review(team_id: str, level: int, body: ReviewDecision, user: dict = Depends(require_role("coordinator"))):
+    team = await mongo.teams.find_one({"_id": team_id})
     if not team:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Team not found")
     if level not in (1, 2):
@@ -18,7 +18,7 @@ def review(team_id: str, level: int, body: ReviewDecision, user: dict = Depends(
 
     submitted_status = "l1_submitted" if level == 1 else "l2_submitted"
     if team["status"] == submitted_status:
-        screening.open_for_review(team, level, user["id"])
+        team = await screening.open_for_review(team, level, user["id"])
 
-    screening.record_decision(team, level, body.score, body.feedback, body.pass_, user["id"])
-    return team
+    updated_team = await screening.record_decision(team, level, body.score, body.feedback, body.pass_, user["id"])
+    return updated_team

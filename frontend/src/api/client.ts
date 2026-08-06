@@ -2,7 +2,9 @@ import axios from 'axios';
 
 export const TOKEN_KEY = 'ignite.auth.token';
 
-export const api = axios.create({ baseURL: '/api/v1' });
+export const api = axios.create({
+  baseURL: import.meta.env.VITE_API_URL || '/api/v1',
+});
 
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem(TOKEN_KEY);
