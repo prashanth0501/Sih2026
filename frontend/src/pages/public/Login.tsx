@@ -5,12 +5,13 @@ import { Button } from '@/components/ui/Button';
 import { useAuth, hasRole } from '@/lib/auth';
 
 export function Login() {
-  const { login, logout } = useAuth();
+  const { login } = useAuth();
   const navigate = useNavigate();
   const location = useLocation() as { state?: { from?: string } };
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -19,18 +20,19 @@ export function Login() {
       return;
     }
     setError('');
+    setLoading(true);
     try {
-      const user = await login(email, password);
+      const user = await login(email.trim(), password);
       if (hasRole(user, 'coordinator')) {
-        // Staff accounts don't work on the participant login — same error
-        // as bad credentials, so this page never reveals which is true.
-        logout();
-        setError("Couldn't log in — check your email and password, or that the API server is running.");
+        navigate('/admin', { replace: true });
         return;
       }
       navigate(location.state?.from || '/dashboard', { replace: true });
-    } catch {
-      setError("Couldn't log in — check your email and password, or that the API server is running.");
+    } catch (err: any) {
+      const msg = err.response?.data?.detail || "Couldn't log in — check your email and password.";
+      setError(msg);
+    } finally {
+      setLoading(false);
     }
   }
 
@@ -38,7 +40,7 @@ export function Login() {
     <div className="mx-auto flex min-h-svh max-w-md flex-col justify-center px-5 py-32 sm:px-8">
       <Reveal>
         <div className="eyebrow mb-5">Welcome back</div>
-        <h1 className="text-[clamp(1.9rem,4vw,2.6rem)]">Log in to your team.</h1>
+        <h1 className="text-[clamp(1.9rem,4vw,2.6rem)]">Log in to your account.</h1>
 
         <form className="mt-9 grid gap-4" onSubmit={handleSubmit}>
           <label className="grid gap-1.5 text-[0.8rem]">
@@ -64,8 +66,8 @@ export function Login() {
             />
           </label>
           {error && <p className="text-[0.82rem] text-red-700">{error}</p>}
-          <Button type="submit" variant="primary" className="mt-2 justify-center">
-            Log in →
+          <Button type="submit" variant="primary" disabled={loading} className="mt-2 justify-center">
+            {loading ? 'Logging in...' : 'Log in →'}
           </Button>
         </form>
 

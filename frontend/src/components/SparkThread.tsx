@@ -1,11 +1,9 @@
 import { useEffect, useRef } from 'react';
 
 /**
- * The site's signature motion device: a generated (never hand-authored)
- * wavy path running down the page. As the visitor scrolls, the path draws
- * itself and a spark marker travels along it via getPointAtLength.
- * Hidden below 900px — the pipeline reads better as a swipeable strip on
- * phones than as a thread with no room to breathe.
+ * The site's signature motion device: a generated wavy path running down the page.
+ * As the visitor scrolls, the path draws itself and a spark marker travels along it.
+ * Hidden below 900px for responsive mobile performance.
  */
 export function SparkThread() {
   const svgRef = useRef<SVGSVGElement>(null);
@@ -24,17 +22,23 @@ export function SparkThread() {
     const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
     function buildPath() {
-      if (!svg || !bg || !fg) return;
-      const h = document.body.scrollHeight;
+      const currentSvg = svgRef.current;
+      if (!currentSvg || !bg || !fg) return;
+      const container = currentSvg.parentElement;
       const w = window.innerWidth;
+
       if (w < 900) {
-        svg.style.display = 'none';
+        currentSvg.style.display = 'none';
         return;
       }
-      svg.style.display = 'block';
-      svg.setAttribute('width', String(w));
-      svg.setAttribute('height', String(h));
-      svg.setAttribute('viewBox', `0 0 ${w} ${h}`);
+      currentSvg.style.display = 'block';
+
+      // Measure height accurately without triggering a scrollHeight feedback loop
+      const h = container ? container.getBoundingClientRect().height : document.documentElement.clientHeight;
+
+      currentSvg.setAttribute('width', String(w));
+      currentSvg.setAttribute('height', String(h));
+      currentSvg.setAttribute('viewBox', `0 0 ${w} ${h}`);
 
       const xBase = Math.min(56, w * 0.04);
       const amp = 26;
@@ -54,11 +58,14 @@ export function SparkThread() {
     }
 
     function onScroll() {
-      if (!fg || !dot) return;
+      const currentSvg = svgRef.current;
+      if (!currentSvg || !fg || !dot) return;
       const len = pathLenRef.current;
       if (!len) return;
+      const container = currentSvg.parentElement;
       const scrollTop = window.scrollY || document.documentElement.scrollTop;
-      const max = document.body.scrollHeight - window.innerHeight;
+      const containerH = container ? container.getBoundingClientRect().height : document.documentElement.scrollHeight;
+      const max = containerH - window.innerHeight;
       const progress = max > 0 ? Math.min(Math.max(scrollTop / max, 0), 1) : 0;
       fg.style.strokeDashoffset = String(len * (1 - progress));
       const pt = fg.getPointAtLength(len * progress);
@@ -96,7 +103,7 @@ export function SparkThread() {
   return (
     <svg
       ref={svgRef}
-      className="pointer-events-none absolute left-0 top-0 z-[1] w-full overflow-visible"
+      className="pointer-events-none absolute inset-x-0 top-0 z-[1] w-full overflow-hidden"
       aria-hidden="true"
     >
       <path ref={bgRef} fill="none" stroke="var(--color-line)" strokeWidth={2} />

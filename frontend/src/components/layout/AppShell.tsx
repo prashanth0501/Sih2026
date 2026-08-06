@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { Link, NavLink, Outlet } from 'react-router-dom';
 import { useAuth } from '@/lib/auth';
 import { cn } from '@/lib/utils';
@@ -6,24 +7,68 @@ export type AppNavItem = { to: string; label: string };
 
 export function AppShell({ title, navItems }: { title: string; navItems: AppNavItem[] }) {
   const { user, logout } = useAuth();
+  const [mobileOpen, setMobileOpen] = useState(false);
+
   return (
     <div className="min-h-screen bg-paper-2">
-      <header className="flex items-center justify-between border-b border-line bg-paper px-5 py-3.5 sm:px-8">
-        <Link to="/" className="flex items-center gap-2.5">
-          <img src="/nagarjuna-logo.webp" alt="" className="h-7 w-auto" />
-          <span className="font-display text-[0.95rem] font-bold">
-            Ignite <span className="mono text-[0.55rem] font-normal text-ink-soft">/ {title}</span>
-          </span>
-        </Link>
-        <div className="mono flex items-center gap-4 text-[0.68rem] text-ink-soft">
-          <span>{user?.name}</span>
-          <button onClick={logout} className="text-marigold hover:underline">
+      {/* Top Navigation Bar */}
+      <header className="sticky top-0 z-40 flex items-center justify-between border-b border-line bg-paper px-4 py-3 sm:px-8">
+        <div className="flex items-center gap-3">
+          {/* Mobile Menu Button */}
+          <button
+            type="button"
+            aria-label="Toggle navigation menu"
+            onClick={() => setMobileOpen((o) => !o)}
+            className="flex h-9 w-9 items-center justify-center rounded border border-line text-ink sm:hidden"
+          >
+            {mobileOpen ? '✕' : '☰'}
+          </button>
+
+          <Link to="/" className="flex items-center gap-2.5">
+            <img src="/nagarjuna-logo.webp" alt="Nagarjuna Logo" className="h-7 w-auto" />
+            <span className="font-display text-[0.95rem] font-bold">
+              Ignite <span className="mono text-[0.6rem] font-normal text-ink-soft">/ {title}</span>
+            </span>
+          </Link>
+        </div>
+
+        <div className="mono flex items-center gap-3 text-[0.72rem] text-ink-soft">
+          <span className="hidden text-ink sm:inline font-medium">{user?.name}</span>
+          <button
+            onClick={logout}
+            className="rounded bg-paper-3 px-2.5 py-1 text-marigold hover:underline sm:bg-transparent sm:p-0"
+          >
             Log out
           </button>
         </div>
       </header>
-      <div className="mx-auto flex max-w-[1400px] gap-0">
-        <nav className="mono sticky top-0 hidden h-[calc(100vh-57px)] w-56 shrink-0 flex-col gap-1 border-r border-line bg-paper p-4 text-[0.7rem] sm:flex">
+
+      {/* Mobile Horizontal Sub-nav Strip (Quick access on phones) */}
+      <div className="border-b border-line bg-paper px-4 py-2 sm:hidden overflow-x-auto">
+        <div className="flex items-center gap-2 w-max text-[0.75rem] mono">
+          {navItems.map((item) => (
+            <NavLink
+              key={item.to}
+              to={item.to}
+              end
+              onClick={() => setMobileOpen(false)}
+              className={({ isActive }) =>
+                cn(
+                  'rounded px-3 py-1.5 transition-colors text-ink-soft hover:text-ink',
+                  isActive && 'bg-paper-3 text-ink font-semibold border border-line'
+                )
+              }
+            >
+              {item.label}
+            </NavLink>
+          ))}
+        </div>
+      </div>
+
+      <div className="mx-auto flex max-w-[1400px]">
+        {/* Desktop Sidebar Nav */}
+        <nav className="mono sticky top-[53px] hidden h-[calc(100vh-53px)] w-60 shrink-0 flex-col gap-1.5 border-r border-line bg-paper p-4 text-[0.75rem] sm:flex">
+          <div className="mb-2 text-[0.62rem] tracking-wider text-ink-soft uppercase">Navigation</div>
           {navItems.map((item) => (
             <NavLink
               key={item.to}
@@ -31,8 +76,8 @@ export function AppShell({ title, navItems }: { title: string; navItems: AppNavI
               end
               className={({ isActive }) =>
                 cn(
-                  'rounded-[2px] px-3 py-2.5 text-ink-soft hover:bg-paper-3 hover:text-ink',
-                  isActive && 'bg-paper-3 text-ink'
+                  'rounded-[2px] px-3 py-2.5 text-ink-soft transition-colors hover:bg-paper-3 hover:text-ink',
+                  isActive && 'bg-paper-3 text-ink font-bold border-l-2 border-marigold'
                 )
               }
             >
@@ -40,7 +85,37 @@ export function AppShell({ title, navItems }: { title: string; navItems: AppNavI
             </NavLink>
           ))}
         </nav>
-        <main className="min-w-0 flex-1 p-5 sm:p-8">
+
+        {/* Mobile Slide-out Drawer */}
+        {mobileOpen && (
+          <div className="fixed inset-0 z-50 flex flex-col bg-paper p-6 sm:hidden">
+            <div className="flex items-center justify-between border-b border-line pb-4">
+              <span className="font-display font-bold">Ignite Menu</span>
+              <button onClick={() => setMobileOpen(false)} className="text-xl">✕</button>
+            </div>
+            <div className="mono mt-4 flex flex-col gap-2 text-[0.9rem]">
+              {navItems.map((item) => (
+                <NavLink
+                  key={item.to}
+                  to={item.to}
+                  end
+                  onClick={() => setMobileOpen(false)}
+                  className={({ isActive }) =>
+                    cn(
+                      'rounded p-3 text-ink-soft',
+                      isActive && 'bg-paper-3 text-ink font-bold'
+                    )
+                  }
+                >
+                  {item.label}
+                </NavLink>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Main Content Area */}
+        <main className="min-w-0 flex-1 p-4 sm:p-8">
           <Outlet />
         </main>
       </div>
