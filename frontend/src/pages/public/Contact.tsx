@@ -5,8 +5,7 @@ import { PEOPLE, COLLEGE_SOCIAL, SIH_OFFICIAL } from '@/lib/data';
 
 const PEOPLE_TO_CONTACT = [
   { ...PEOPLE.spoc, note: 'Final selection & escalations' },
-  { ...PEOPLE.coordinators[0], note: 'Registrations & logistics' },
-  { ...PEOPLE.coordinators[1], note: 'Registrations & logistics' },
+  { ...PEOPLE.ncet_coordinator, note: 'Registrations & logistics' },
 ];
 
 export function Contact() {

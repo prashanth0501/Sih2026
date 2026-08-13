@@ -57,13 +57,21 @@ export function People() {
 
       <Reveal delay={0.2}>
         <div className="mt-20">
-          <div className="eyebrow mb-6">Coordinators</div>
-          <div className="grid gap-5 sm:grid-cols-2">
-            {PEOPLE.coordinators.map((c) => (
-              <FlipCard key={c.name} initials={c.initials} name={c.name} role={c.role} bio={c.bio} photoUrl={c.photoUrl} />
-            ))}
+          <div className="eyebrow mb-5">A message from the NCET Coordinator</div>
+          <div className="flex flex-col gap-6 border border-line bg-paper-2 p-7 sm:flex-row sm:items-start">
+            <img
+              src={PEOPLE.ncet_coordinator.photoUrl}
+              alt={PEOPLE.ncet_coordinator.name}
+              className="h-40 w-40 shrink-0 rounded-full object-cover object-top shadow-md shadow-ink/10"
+            />
+            <div>
+              <h2 className="text-[1.15rem] font-bold">{PEOPLE.ncet_coordinator.name}</h2>
+              <div className="mono mb-3 text-[0.64rem] text-ink-soft">{PEOPLE.ncet_coordinator.role}</div>
+              <p className="text-ink-soft">
+                "{PEOPLE.ncet_coordinator.message}"
+              </p>
+            </div>
           </div>
-          <p className="mono mt-4 text-[0.62rem] text-ink-soft/60">Tap a card to flip it</p>
         </div>
       </Reveal>
 

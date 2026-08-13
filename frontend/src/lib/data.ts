@@ -92,26 +92,15 @@ export const PEOPLE = {
     phone: '+91 96633 00824',
     bio: 'Owns final selection and publishes results to the national SIH portal. The single point of contact between this college and the national organisers.',
   },
-  coordinators: [
-    {
-      name: 'Partha Shankar',
-      role: 'Coordinator',
-      initials: 'PS',
-      photoUrl: '/people/partha.webp',
-      email: 'parthashankar21@gmail.com',
-      phone: '+91 93531 89326',
-      bio: 'Runs the day-to-day of the internal hackathon — registrations, communication, and keeping announcements current.',
-    },
-    {
-      name: 'Nirmith M Jain',
-      role: 'Coordinator',
-      initials: 'NJ',
-      photoUrl: '/people/nirmith.webp',
-      email: 'nirmithmjain@gmail.com',
-      phone: '+91 94821 10905',
-      bio: 'Works alongside Partha on logistics and communication for the internal hackathon.',
-    },
-  ],
+  ncet_coordinator: {
+    name: 'Dr. Shashikiran R',
+    role: 'Coordinator',
+    photoUrl: '/people/image.png',
+    email: 'coordinator@ncetmail.com',
+    phone: '+91 00000 00000',
+    bio: 'Oversees the SIH initiative at NCET.',
+    message: 'It is my pleasure to welcome all students to the Smart India Hackathon (SIH) initiative at our institution. SIH provides an excellent platform for students to transform innovative ideas into practical solutions for real-world challenges. I encourage students to actively participate, collaborate, think creatively, and leverage emerging technologies to develop impactful solutions. Let us work together to nurture innovation, entrepreneurship, and problem-solving skills among our students. I wish all the participating teams great success and an enriching SIH experience.',
+  },
 };
 
 // Dates per the official SIH 2026 Guidelines (SPOC registration, and the
