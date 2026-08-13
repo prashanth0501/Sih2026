@@ -1,5 +1,4 @@
 import { Reveal } from '@/components/Reveal';
-import { FlipCard } from '@/components/ui/FlipCard';
 import { PEOPLE } from '@/lib/data';
 
 export function People() {
