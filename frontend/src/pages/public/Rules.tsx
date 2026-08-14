@@ -57,11 +57,22 @@ const SECTIONS = [
       'A college photo ID and a signed consent letter are mandatory to participate in the finale.',
     ],
   },
+  {
+    title: 'Internal Hackathon Report Requirements',
+    points: [
+      'The SPOC must upload a detailed Internal Hackathon report (maximum 15 pages) on the national dashboard portal.',
+      'The report must include an Event Overview (1 page), Event Photos (2 pages), and Participating Teams’ Pictures (2 pages).',
+      'It must also document the Judging Process (1 page), Jury Panel Details (1 page), Judges’ Information (1 page), and the Nominated Top Teams (1 page).',
+      'The SPOC must provide the total participating teams and student breakdown (Male/Female/Total), along with the Date, Location, and Mode (Online/Offline) of the hackathon.',
+      'The report requires proof of Social Media Promotion (1 page) using the hashtags #sih2026 and #smartindiahackathon2026, tagging the official Ministry of Education Innovation Cell on Twitter, as well as any News Articles (1 page).',
+      'An Internal Hackathon Image/Video link must also be provided to the national portal by the SPOC.',
+    ],
+  },
 ];
 
 export function Rules() {
   return (
-    <div className="mx-auto max-w-[900px] px-5 pb-16 pt-6 sm:pt-8">
+    <div className="mx-auto max-w-225 px-5 pb-16 pt-6 sm:pt-8">
       <Reveal>
         <div className="text-center">
           <div className="eyebrow mb-5">Rules</div>
