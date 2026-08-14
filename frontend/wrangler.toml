@@ -1,0 +1,11 @@
+name = "ignite-sih"
+compatibility_date = "2024-04-05"
+pages_build_output_dir = "dist"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "ignite-sih"
+database_id = "c0fb2687-7cb2-48ef-bdb7-b58c0f2c1184"
+
+[vars]
+JWT_SECRET = "dev-only-secret-change-me"
