@@ -39,7 +39,7 @@ export function Contact() {
         }),
       });
 
-      const data = await res.json();
+      const data: any = await res.json();
 
       if (data.success) {
         setSent(true);
@@ -65,7 +65,7 @@ export function Contact() {
 
   return (
     <div>
-      <div className="mx-auto max-w-[960px] px-5 pt-6 sm:pt-8 sm:px-8">
+      <div className="mx-auto max-w-240 px-5 pt-6 sm:pt-8 sm:px-8">
         <Reveal>
           <div className="text-center flex flex-col items-center justify-center mx-auto max-w-2xl space-y-3">
             <div className="eyebrow">Contact</div>
@@ -108,7 +108,7 @@ export function Contact() {
             className="pointer-events-none absolute -left-20 top-1/2 h-64 w-64 -translate-y-1/2 rounded-full opacity-30 blur-3xl"
             style={{ background: 'radial-gradient(circle, var(--color-spark-glow), transparent 70%)' }}
           />
-          <div className="relative mx-auto grid max-w-[960px] gap-10 px-5 sm:grid-cols-2 sm:px-8">
+          <div className="relative mx-auto grid max-w-240 gap-10 px-5 sm:grid-cols-2 sm:px-8">
             <div>
               <h2 className="text-[1.15rem] font-bold text-paper">Follow the college</h2>
               <p className="mt-2 text-[0.85rem] text-paper/65">
@@ -140,7 +140,7 @@ export function Contact() {
         </div>
       </Reveal>
 
-      <div className="mx-auto max-w-[640px] px-5 pb-16 pt-16 sm:px-8">
+      <div className="mx-auto max-w-160 px-5 pb-16 pt-16 sm:px-8">
         <Reveal delay={0.15}>
           <div className="rounded-2xl border border-line bg-paper-2 p-8 sm:p-10 shadow-sm">
             <div className="eyebrow text-left text-[0.85rem]">Or write it down</div>

@@ -86,3 +86,4 @@ CREATE TABLE announcements (
     body TEXT NOT NULL,
     date TEXT NOT NULL
 );
+DROP TABLE IF EXISTS promo_shares; CREATE TABLE promo_shares (id TEXT PRIMARY KEY, promo_post_id TEXT NOT NULL, student_name TEXT, name TEXT, usn TEXT NOT NULL, platform TEXT, post_url TEXT NOT NULL, is_public_on_wall INTEGER NOT NULL DEFAULT 1, submitted_at TEXT NOT NULL, count_for_post INTEGER DEFAULT 0);
