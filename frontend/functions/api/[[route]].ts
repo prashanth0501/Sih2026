@@ -8,7 +8,11 @@ type Bindings = {
   JWT_SECRET: string;
 };
 
-const app = new Hono<{ Bindings: Bindings }>().basePath('/api/v1');
+type Variables = {
+  user: any;
+};
+
+const app = new Hono<{ Bindings: Bindings; Variables: Variables }>().basePath('/api/v1');
 
 // === Auth Middleware ===
 const authMiddleware = async (c: any, next: any) => {
