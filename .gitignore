@@ -3,7 +3,11 @@ dist/
 .env
 .env.local
 ADMIN_CREDENTIALS.md
+CLOUDFLARE_CREDENTIALS.md
 .claude/
+
+# docs — kept locally for reference, not pushed to GitHub
+docs/
 
 # backend
 backend/venv/

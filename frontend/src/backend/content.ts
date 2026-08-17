@@ -18,7 +18,9 @@ contentRouter.get('/settings', async (c) => {
 
 contentRouter.patch('/settings', authMiddleware, async (c) => {
   const user = c.get('user');
-  if (user.role !== 'admin' && user.role !== 'spoc') return c.json({ detail: 'Forbidden' }, 403);
+  if (!['coordinator', 'spoc', 'admin'].includes(user.role)) {
+    return c.json({ detail: 'Forbidden — coordinator or higher required' }, 403);
+  }
   
   const body = await c.req.json();
   const settings = await c.env.DB.prepare('SELECT * FROM system_settings WHERE id = ?').bind('global_settings').first();

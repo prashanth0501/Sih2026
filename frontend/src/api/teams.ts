@@ -50,9 +50,15 @@ export async function createTeam(input: {
   return data;
 }
 
-export async function getMyTeam() {
-  const { data } = await api.get<ApiTeam>('/teams/mine');
-  return data;
+export async function getMyTeam(): Promise<ApiTeam | null> {
+  try {
+    const { data } = await api.get<ApiTeam>('/teams/mine');
+    return data;
+  } catch (err: any) {
+    // 404 means user has no team yet — not an error
+    if (err?.response?.status === 404) return null;
+    throw err;
+  }
 }
 
 export async function addTeamMember(teamId: string, member: ApiTeamMember) {

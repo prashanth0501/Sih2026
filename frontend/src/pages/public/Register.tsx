@@ -86,13 +86,22 @@ export function Register() {
       setError('USN is required (e.g. 1NC22CS005).');
       return;
     }
-
+    if (!form.teamName.trim()) {
+      setError('Team name is required.');
+      return;
+    }
+    if (!form.theme) {
+      setError('Please select a problem theme.');
+      return;
+    }
     if (!form.leaderGithub || !form.leaderGithub.toLowerCase().includes('github.com')) {
       setError('Leader GitHub profile URL is required (e.g. https://github.com/your-username).');
       return;
     }
 
     setLoading(true);
+
+    // Step 1 — Create leader account
     try {
       await signup({
         name: form.name,
@@ -102,8 +111,19 @@ export function Register() {
         department: form.department,
         year: form.year,
         gender: form.gender,
+        github_url: form.leaderGithub, // BUG 3 FIX — was missing before
       });
+    } catch (err: any) {
+      const msg =
+        err.response?.data?.detail ||
+        "Couldn't create your account — email may already be registered.";
+      setError(msg);
+      setLoading(false);
+      return;
+    }
 
+    // Step 2 — Create team (account now exists, JWT set)
+    try {
       await createTeam({
         name: form.teamName,
         theme: form.theme,
@@ -111,14 +131,18 @@ export function Register() {
         leader_github_url: form.leaderGithub,
         members,
       });
-
-      navigate('/dashboard', { replace: true });
     } catch (err: any) {
-      const msg = err.response?.data?.detail || "Couldn't create your account. Please check your details or contact admin.";
-      setError(msg);
-    } finally {
+      // BUG 8 FIX — account was created but team failed; tell user clearly
+      const msg =
+        err.response?.data?.detail ||
+        'Your account was created but the team could not be set up. Please log in and try creating your team from the dashboard.';
+      setError(`Account created ✓ — but team setup failed: ${msg}`);
       setLoading(false);
+      return;
     }
+
+    setLoading(false);
+    navigate('/dashboard', { replace: true });
   }
 
   if (settings && !settings.registration_open) {
