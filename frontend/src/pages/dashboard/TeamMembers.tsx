@@ -3,7 +3,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { addTeamMember, getMyTeam, removeTeamMember } from '@/api/teams';
 import { Button } from '@/components/ui/Button';
 
-const DEPARTMENTS = ['CSE', 'ISE', 'AI & ML', 'ECE', 'EEE', 'Mechanical', 'Civil', 'Biotech'];
+const DEPARTMENTS = ['CSE', 'ISE', 'AI & ML', 'ECE', 'EEE', 'Mechanical', 'Civil', 'Biotech', 'BCA', 'MCA', 'MBA', 'Data Science'];
 const MAX_MEMBERS = 6;
 
 export function TeamMembers() {

@@ -1,21 +1,20 @@
 import { useMemo, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { listAllTeams, setTeamLock, adminUpdateTeam, type ApiTeam, type ApiTeamMember } from '@/api/teams';
+import { listAllTeams, adminUpdateTeam, type ApiTeam, type ApiTeamMember } from '@/api/teams';
 import { STATUS_LABEL, type ScreeningStatus } from '@/lib/data';
 import { StatusBadge } from '@/components/ui/StatusBadge';
 import { Button } from '@/components/ui/Button';
 
 const PAGE_SIZE = 25;
 const STATUS_OPTIONS: Array<ScreeningStatus | 'all'> = [
-  'all', 'registered', 'l1_submitted', 'l1_under_review', 'l1_cleared',
-  'l1_rejected', 'l2_submitted', 'l2_under_review', 'selected', 'l2_rejected',
+  'all', 'registered', 'l1_submitted', 'l1_cleared',
+  'l1_rejected', 'l2_submitted', 'selected', 'l2_rejected',
 ];
 
 export function Registrations() {
   const queryClient = useQueryClient();
   const [query, setQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<ScreeningStatus | 'all'>('all');
-  const [includedFilter, setIncludedFilter] = useState<'all' | 'included' | 'not_included'>('all');
   const [page, setPage] = useState(1);
   const [selectedTeam, setSelectedTeam] = useState<ApiTeam | null>(null);
   const [isEditing, setIsEditing] = useState(false);
@@ -47,25 +46,9 @@ export function Registrations() {
     },
   });
 
-  const lockMutation = useMutation({
-    mutationFn: ({ id, locked }: { id: string; locked: boolean }) => setTeamLock(id, locked),
-    onSuccess: (updated) => {
-      queryClient.invalidateQueries({ queryKey: ['all-teams-registrations'] });
-      setSelectedTeam(updated);
-    },
-  });
-
-  // Calculate dynamic metrics
+  // Calculate total metrics
   const totalTeamsCount = teams.length;
-  const totalStudentsCount = teams.reduce((s, t) => s + (t.members?.length || 0) + 1, 0);
-
-  const includedTeamsCount = teams.filter(
-    (t) => t.status === 'l1_cleared' || t.status === 'l2_submitted' || t.status === 'l2_under_review' || t.status === 'selected'
-  ).length;
-
-  const notIncludedTeamsCount = teams.filter(
-    (t) => t.status === 'registered' || t.status === 'l1_submitted' || t.status === 'l1_under_review' || t.status === 'l1_rejected' || t.status === 'l2_rejected'
-  ).length;
+  const totalStudentsCount = teams.reduce((s, t) => s + (t.members?.length || 0), 0);
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -73,21 +56,16 @@ export function Registrations() {
       // Status dropdown filter
       if (statusFilter !== 'all' && t.status !== statusFilter) return false;
 
-      // Included vs Not Included tab filter
-      const isIncluded = ['l1_cleared', 'l2_submitted', 'l2_under_review', 'selected'].includes(t.status);
-      if (includedFilter === 'included' && !isIncluded) return false;
-      if (includedFilter === 'not_included' && isIncluded) return false;
-
       // Search text query
       if (!q) return true;
       return (
         t.name.toLowerCase().includes(q) ||
         (t.theme && t.theme.toLowerCase().includes(q)) ||
         (t.problem_statement_id && t.problem_statement_id.toLowerCase().includes(q)) ||
-        t.members.some((m) => m.name.toLowerCase().includes(q) || m.email.toLowerCase().includes(q))
+        t.members?.some((m) => m.name.toLowerCase().includes(q) || (m.email && m.email.toLowerCase().includes(q)))
       );
     });
-  }, [teams, query, statusFilter, includedFilter]);
+  }, [teams, query, statusFilter]);
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
   const page_ = Math.min(page, totalPages);
@@ -141,30 +119,8 @@ export function Registrations() {
         </div>
       </div>
 
-      {/* Dynamic Included vs Not Included Filter Tabs */}
-      <div className="mt-6 flex items-center gap-2 border-b border-line pb-3 text-[0.82rem] mono">
-        <button
-          onClick={() => { setIncludedFilter('all'); setPage(1); }}
-          className={`px-3 py-1.5 rounded transition-colors ${includedFilter === 'all' ? 'bg-paper-3 font-bold border border-line text-ink' : 'text-ink-soft hover:text-ink'}`}
-        >
-          All Registrations ({totalTeamsCount})
-        </button>
-        <button
-          onClick={() => { setIncludedFilter('included'); setPage(1); }}
-          className={`px-3 py-1.5 rounded transition-colors ${includedFilter === 'included' ? 'bg-green-700/20 text-green-700 font-bold border border-green-700/40' : 'text-ink-soft hover:text-green-700'}`}
-        >
-          ✓ Included / Cleared ({includedTeamsCount})
-        </button>
-        <button
-          onClick={() => { setIncludedFilter('not_included'); setPage(1); }}
-          className={`px-3 py-1.5 rounded transition-colors ${includedFilter === 'not_included' ? 'bg-red-700/20 text-red-700 font-bold border border-red-700/40' : 'text-ink-soft hover:text-red-700'}`}
-        >
-          ✕ Not Included / Pending ({notIncludedTeamsCount})
-        </button>
-      </div>
-
       {/* Data Table */}
-      <div className="mt-4 overflow-x-auto border border-line bg-paper">
+      <div className="mt-6 overflow-x-auto border border-line bg-paper">
         <table className="w-full min-w-[850px] border-collapse text-[0.85rem]">
           <thead>
             <tr className="mono border-b border-line text-left text-[0.62rem] text-ink-soft uppercase">
@@ -185,13 +141,12 @@ export function Registrations() {
               >
                 <td className="px-4 py-3 font-bold text-ink">
                   {t.name}
-                  {t.is_locked && <span className="ml-2 mono text-[0.65rem] text-red-600 font-normal">[Locked]</span>}
                 </td>
                 <td className="mono px-4 py-3 text-marigold font-bold">
                   {t.problem_statement_id || '—'}
                 </td>
                 <td className="mono px-4 py-3 text-ink-soft">
-                  {(t.members?.length || 0) + 1} members
+                  {t.members?.length || 0} members
                 </td>
                 <td className="max-w-[200px] truncate px-4 py-3 text-ink-soft">{t.theme || 'Unassigned'}</td>
                 <td className="px-4 py-3">
@@ -273,23 +228,10 @@ export function Registrations() {
             {/* Modal Body */}
             <div className="mt-4 space-y-6 overflow-y-auto pr-2 flex-1">
               {/* Quick Status Bar */}
-              <div className="flex flex-wrap items-center justify-between gap-3 rounded border border-line bg-paper-2 p-3">
+              <div className="flex items-center justify-between gap-3 rounded border border-line bg-paper-2 p-3">
                 <div className="flex items-center gap-3">
                   <span className="mono text-[0.75rem] text-ink-soft">Status:</span>
                   <StatusBadge status={selectedTeam.status as ScreeningStatus} />
-                </div>
-                <div className="flex items-center gap-2">
-                  <span className="mono text-[0.75rem] text-ink-soft">Lock Roster:</span>
-                  <button
-                    onClick={() => lockMutation.mutate({ id: selectedTeam.id, locked: !selectedTeam.is_locked })}
-                    className={`mono rounded px-3 py-1 text-[0.72rem] font-bold border transition-colors ${
-                      selectedTeam.is_locked
-                        ? 'border-red-600 bg-red-600 text-paper hover:bg-red-700'
-                        : 'border-green-600 bg-green-600 text-paper hover:bg-green-700'
-                    }`}
-                  >
-                    {selectedTeam.is_locked ? 'Locked (Click to Unlock)' : 'Unlocked (Click to Lock)'}
-                  </button>
                 </div>
               </div>
 
@@ -434,7 +376,7 @@ export function Registrations() {
               <div className="border border-line bg-paper p-4">
                 <div className="flex items-center justify-between mb-3">
                   <div className="mono text-[0.72rem] font-bold uppercase tracking-wider text-ink-soft">
-                    Team Members Roster ({(selectedTeam.members?.length || 0) + 1} Total)
+                    Team Members Roster ({selectedTeam.members?.length || 0} Total)
                   </div>
                 </div>
 
@@ -451,8 +393,10 @@ export function Registrations() {
                     <tbody>
                       {selectedTeam.members?.map((m: ApiTeamMember, idx: number) => (
                         <tr key={idx} className="border-b border-line last:border-0 hover:bg-paper-2">
-                          <td className="px-3 py-2 font-medium">{m.name}</td>
-                          <td className="mono px-3 py-2 text-ink-soft">{m.email}</td>
+                          <td className="px-3 py-2 font-medium">
+                            {m.name} {m.role === 'leader' && <span className="mono text-[0.65rem] text-marigold font-bold ml-1">(Leader)</span>}
+                          </td>
+                          <td className="mono px-3 py-2 text-ink-soft">{m.email || '—'}</td>
                           <td className="px-3 py-2 text-ink-soft">{m.department || 'CSE'} (Yr {m.year || 3})</td>
                           <td className="px-3 py-2">
                             {m.github_url ? (

@@ -89,3 +89,16 @@ CREATE TABLE announcements (
 );
 DROP TABLE IF EXISTS promo_shares; CREATE TABLE promo_shares (id TEXT PRIMARY KEY, promo_post_id TEXT NOT NULL, student_name TEXT, name TEXT, usn TEXT NOT NULL, platform TEXT, post_url TEXT NOT NULL, is_public_on_wall INTEGER NOT NULL DEFAULT 1, submitted_at TEXT NOT NULL, count_for_post INTEGER DEFAULT 0);
 DROP TABLE IF EXISTS team_members; CREATE TABLE team_members (id TEXT PRIMARY KEY, team_id TEXT NOT NULL, name TEXT NOT NULL, email TEXT, usn TEXT UNIQUE NOT NULL, gender TEXT NOT NULL, department TEXT NOT NULL, year INTEGER NOT NULL, role TEXT NOT NULL, github_url TEXT, created_at TEXT NOT NULL);
+
+-- Default system settings
+INSERT OR IGNORE INTO system_settings (id, registration_open, level1_open, level2_open, updated_at)
+VALUES ('global_settings', 1, 1, 1, '2026-08-17T00:00:00.000Z');
+
+-- Default accounts (admin/coordinator/demo)
+INSERT OR IGNORE INTO users (id, name, email, password_hash, role, department, year, usn, gender, github_url, created_at)
+VALUES 
+('seed-user-1', 'Partha Shankar', 'parthashankar21@gmail.com', 'coordinator123', 'coordinator', 'CSE', 4, '1NC22CS001', 'Male', 'https://github.com/parthashankar', '2026-08-17T00:00:00.000Z'),
+('seed-user-2', 'Nirmith M Jain', 'nirmithmjain@gmail.com', 'coordinator123', 'coordinator', 'CSE', 4, '1NC22CS002', 'Male', 'https://github.com/nirmithmjain', '2026-08-17T00:00:00.000Z'),
+('seed-user-3', 'Dr. Bhargava R', 'dr.bhargava@ncetmail.com', 'spoc123', 'spoc', 'CSE', 4, '1NC20CS000', 'Male', 'https://github.com/drbhargava', '2026-08-17T00:00:00.000Z'),
+('seed-user-4', 'Demo Participant', 'participant@nagarjuna.edu', 'participant123', 'participant', 'CSE', 2, '1NC22CS005', 'Male', 'https://github.com/demoparticipant', '2026-08-17T00:00:00.000Z');
+

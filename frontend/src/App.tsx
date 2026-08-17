@@ -37,7 +37,6 @@ import { ScreeningConsole } from '@/pages/admin/ScreeningConsole';
 import { PromotionComposer } from '@/pages/admin/PromotionComposer';
 import { PromoPostDetails } from '@/pages/admin/PromoPostDetails';
 import { UpdatesComposer } from '@/pages/admin/UpdatesComposer';
-import { ContentEditor } from '@/pages/admin/ContentEditor';
 
 import { ScrollToTop } from '@/components/ScrollToTop';
 
@@ -66,7 +65,6 @@ const ADMIN_NAV = [
   { to: '/admin/screening', label: 'Screening console' },
   { to: '/admin/promotions', label: 'Promotion composer' },
   { to: '/admin/updates', label: 'Updates composer' },
-  { to: '/admin/content', label: 'Content editor' },
 ];
 
 function App() {
@@ -115,7 +113,6 @@ function App() {
                 <Route path="promotions" element={<PromotionComposer />} />
                 <Route path="promotions/:postId" element={<PromoPostDetails />} />
                 <Route path="updates" element={<UpdatesComposer />} />
-                <Route path="content" element={<ContentEditor />} />
               </Route>
             </Route>
           </Routes>

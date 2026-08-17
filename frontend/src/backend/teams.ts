@@ -290,19 +290,124 @@ teamsRouter.patch('/:id/lock', async (c) => {
   return c.json({ success: true });
 });
 
+// ─── POST /teams/:id/submissions — Submit PPT or Demo URL ─────────────────────
+
+teamsRouter.post('/:id/submissions', async (c) => {
+  const teamId = c.req.param('id');
+  const body = await c.req.json();
+  const level = Number(body.level);
+  const url = String(body.submission_url || '').trim();
+
+  if (!url || !url.startsWith('http')) {
+    return c.json({ detail: 'Valid submission URL (e.g. Google Drive link) is required' }, 400);
+  }
+
+  const team = await c.env.DB.prepare('SELECT id FROM teams WHERE id = ?').bind(teamId).first();
+  if (!team) return c.json({ detail: 'Team not found' }, 404);
+
+  if (level === 1) {
+    await c.env.DB.prepare(
+      `UPDATE teams SET level1_submission_url = ?, level1_status = 'submitted', status = 'l1_submitted', updated_at = ? WHERE id = ?`
+    ).bind(url, new Date().toISOString(), teamId).run();
+  } else if (level === 2) {
+    await c.env.DB.prepare(
+      `UPDATE teams SET level2_submission_url = ?, level2_status = 'submitted', status = 'l2_submitted', updated_at = ? WHERE id = ?`
+    ).bind(url, new Date().toISOString(), teamId).run();
+  } else {
+    return c.json({ detail: 'Invalid submission level' }, 400);
+  }
+
+  return c.json({ success: true });
+});
+
+// ─── POST /teams/:id/screening/:level/review — Admin review submission ───────
+
+teamsRouter.post('/:id/screening/:level/review', async (c) => {
+  const user = c.get('user');
+  if (!['coordinator', 'spoc', 'admin'].includes(user.role)) {
+    return c.json({ detail: 'Forbidden — coordinator or higher required' }, 403);
+  }
+
+  const teamId = c.req.param('id');
+  const level = Number(c.req.param('level'));
+  const body = await c.req.json();
+  const pass = Boolean(body.pass);
+  const score = body.score ?? null;
+  const feedback = body.feedback || '';
+
+  if (level === 1) {
+    const nextStatus = pass ? 'passed' : 'rejected';
+    const overallStatus = pass ? 'l1_cleared' : 'l1_rejected';
+    await c.env.DB.prepare(
+      `UPDATE teams SET level1_status = ?, level1_score = ?, level1_feedback = ?, status = ?, level1_reviewer_id = ?, level1_reviewed_at = ?, updated_at = ? WHERE id = ?`
+    ).bind(nextStatus, score, feedback, overallStatus, user.sub, new Date().toISOString(), new Date().toISOString(), teamId).run();
+  } else if (level === 2) {
+    const nextStatus = pass ? 'passed' : 'rejected';
+    const overallStatus = pass ? 'selected' : 'l2_rejected';
+    await c.env.DB.prepare(
+      `UPDATE teams SET level2_status = ?, level2_score = ?, level2_feedback = ?, status = ?, level2_reviewer_id = ?, level2_reviewed_at = ?, updated_at = ? WHERE id = ?`
+    ).bind(nextStatus, score, feedback, overallStatus, user.sub, new Date().toISOString(), new Date().toISOString(), teamId).run();
+  }
+
+  return c.json({ success: true });
+});
+
+// ─── PATCH /teams/:id — Admin edit team details ────────────────────────────────
+
+teamsRouter.patch('/:id', async (c) => {
+  const user = c.get('user');
+  if (!['coordinator', 'spoc', 'admin'].includes(user.role)) {
+    return c.json({ detail: 'Forbidden — coordinator or higher required' }, 403);
+  }
+
+  const teamId = c.req.param('id');
+  const body = await c.req.json();
+
+  const team = await c.env.DB.prepare('SELECT * FROM teams WHERE id = ?').bind(teamId).first();
+  if (!team) return c.json({ detail: 'Team not found' }, 404);
+
+  const newName = body.name ?? team.name;
+  const newTheme = body.theme ?? team.theme;
+  const newPsId = body.problem_statement_id ?? team.problem_statement_id;
+  const newStatus = body.status ?? team.status;
+
+  await c.env.DB.prepare(
+    `UPDATE teams SET name = ?, theme = ?, status = ?, updated_at = ? WHERE id = ?`
+  ).bind(newName, newTheme, newStatus, new Date().toISOString(), teamId).run();
+
+  const updatedTeam = await c.env.DB.prepare('SELECT * FROM teams WHERE id = ?').bind(teamId).first();
+  if (!updatedTeam) return c.json({ detail: 'Error retrieving updated team' }, 500);
+
+  const { results: members } = await c.env.DB.prepare('SELECT * FROM team_members WHERE team_id = ?').bind(teamId).all();
+
+  return c.json({
+    id: updatedTeam.id,
+    name: updatedTeam.name,
+    leader_id: updatedTeam.leader_usn,
+    leader_usn: updatedTeam.leader_usn,
+    theme: updatedTeam.theme,
+    problem_statement_id: newPsId,
+    members: members,
+    status: updatedTeam.status,
+    is_locked: false,
+    viewer_is_leader: false,
+    level1: { status: updatedTeam.level1_status, score: updatedTeam.level1_score, feedback: updatedTeam.level1_feedback, submission_url: updatedTeam.level1_submission_url },
+    level2: { status: updatedTeam.level2_status, score: updatedTeam.level2_score, feedback: updatedTeam.level2_feedback, submission_url: updatedTeam.level2_submission_url },
+  });
+});
+
 // ─── GET /teams — Admin: list all teams ───────────────────────────────────────
 
 teamsRouter.get('/', async (c) => {
   const { results } = await c.env.DB.prepare(
     `SELECT teams.*,
-      (SELECT json_group_array(json_object('name', name, 'usn', usn, 'gender', gender, 'role', role))
+      (SELECT json_group_array(json_object('name', name, 'usn', usn, 'gender', gender, 'role', role, 'department', department, 'year', year, 'email', email, 'github_url', github_url))
        FROM team_members WHERE team_id = teams.id) as members_list
      FROM teams ORDER BY created_at DESC LIMIT 200`
   ).all();
 
   return c.json(
     results.map((t) => {
-      // BUG 5 FIX — json_group_array returns '[null]' for empty, filter nulls out
       let members: any[] = [];
       try {
         const parsed = JSON.parse((t.members_list as string) || '[]');
@@ -314,11 +419,13 @@ teamsRouter.get('/', async (c) => {
       return {
         id: t.id,
         name: t.name,
+        leader_usn: t.leader_usn,
+        theme: t.theme,
         status: t.status,
-        is_locked: Boolean(t.is_locked),
+        is_locked: false,
         members,
-        level1: { status: t.level1_status, score: t.level1_score },
-        level2: { status: t.level2_status, score: t.level2_score },
+        level1: { status: t.level1_status, score: t.level1_score, feedback: t.level1_feedback, submission_url: t.level1_submission_url },
+        level2: { status: t.level2_status, score: t.level2_score, feedback: t.level2_feedback, submission_url: t.level2_submission_url },
         created_at: t.created_at,
       };
     })

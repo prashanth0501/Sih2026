@@ -3,7 +3,7 @@ import { Link, NavLink, useLocation } from 'react-router-dom';
 import { useAuth, hasRole } from '@/lib/auth';
 import { cn } from '@/lib/utils';
 
-// Categorized navigation structure for all site options
+// ─── Navigation structure — same as sidebar, used for both ───────────────────
 const NAV_CATEGORIES = [
   {
     title: 'Portal',
@@ -45,59 +45,56 @@ interface NavBarProps {
 
 export function NavBar({ sidebarOpen, setSidebarOpen }: NavBarProps) {
   const sidebarRef = useRef<HTMLDivElement>(null);
+  const desktopNavRef = useRef<HTMLDivElement>(null);
   const { user, logout } = useAuth();
   const location = useLocation();
-
   const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
-  const dropdownTimeoutRef = useRef<number | null>(null);
 
-  // Close menus on route change or Escape key
+  // Close everything on route change
   useEffect(() => {
     setSidebarOpen(false);
     setActiveDropdown(null);
   }, [location.pathname, setSidebarOpen]);
 
+  // Escape key closes everything
   useEffect(() => {
-    function onKey(e: KeyboardEvent) {
+    const onKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
         setSidebarOpen(false);
         setActiveDropdown(null);
       }
-    }
+    };
     document.addEventListener('keydown', onKey);
     return () => document.removeEventListener('keydown', onKey);
   }, [setSidebarOpen]);
 
-  const handleDropdownEnter = (title: string) => {
-    if (dropdownTimeoutRef.current) clearTimeout(dropdownTimeoutRef.current);
-    setActiveDropdown(title);
-  };
+  // Click outside desktop nav → close dropdown
+  useEffect(() => {
+    const onClickOutside = (e: MouseEvent) => {
+      if (desktopNavRef.current && !desktopNavRef.current.contains(e.target as Node)) {
+        setActiveDropdown(null);
+      }
+    };
+    document.addEventListener('mousedown', onClickOutside);
+    return () => document.removeEventListener('mousedown', onClickOutside);
+  }, []);
 
-  const handleDropdownLeave = () => {
-    dropdownTimeoutRef.current = window.setTimeout(() => {
-      setActiveDropdown(null);
-    }, 180);
-  };
+  const toggleDropdown = (title: string) =>
+    setActiveDropdown((prev) => (prev === title ? null : title));
 
   return (
     <>
-      {/* Top Fixed Header Navbar */}
-      <header className="fixed inset-x-0 top-0 z-50 bg-paper/95 backdrop-blur-md border-b border-line/60 py-2 sm:py-3 transition-all duration-200 shadow-xs">
-        <div className="mx-auto flex max-w-7xl items-center justify-between px-2 sm:px-8 gap-1.5 sm:gap-4 overflow-hidden">
-          
-          {/* Logo + Menu Toggle */}
-          <div className="flex items-center gap-1.5 sm:gap-3 shrink">
-            {/* 1. Brand Logo */}
-            <Link to="/" className="flex items-center gap-1.5 sm:gap-2.5 shrink group">
-              <img
-                src="/nagarjuna-logo.webp"
-                alt="Nagarjuna Logo"
-                className="h-7 sm:h-10 w-auto shrink-0 rounded-md"
-                width={144}
-                height={144}
-              />
-              <span className="flex items-center gap-1 sm:gap-2 shrink">
-                <span className="font-display text-sm sm:text-2xl font-bold tracking-tight text-ink truncate">
+      {/* ── Fixed Top Header ─────────────────────────────────────────────── */}
+      <header className="fixed inset-x-0 top-0 z-50 bg-paper/95 backdrop-blur-md border-b border-line/60 py-2 sm:py-3 shadow-xs">
+        <div className="mx-auto flex max-w-7xl items-center justify-between px-2 sm:px-8 gap-2 sm:gap-4">
+
+          {/* LEFT: Logo + hamburger */}
+          <div className="flex items-center gap-1.5 sm:gap-3 shrink-0">
+            <Link to="/" className="flex items-center gap-1.5 sm:gap-2.5 shrink-0 group">
+              <img src="/nagarjuna-logo.webp" alt="Nagarjuna Logo"
+                className="h-7 sm:h-10 w-auto shrink-0 rounded-md" width={144} height={144} />
+              <span className="flex items-center gap-1 sm:gap-2">
+                <span className="font-display text-sm sm:text-2xl font-bold tracking-tight text-ink">
                   Ignite
                 </span>
                 <span className="hidden sm:inline-flex items-center mono rounded-full bg-marigold/15 border border-marigold/40 px-2.5 py-0.5 text-[0.68rem] font-bold text-marigold">
@@ -106,7 +103,7 @@ export function NavBar({ sidebarOpen, setSidebarOpen }: NavBarProps) {
               </span>
             </Link>
 
-            {/* 2. Menu Toggle Button */}
+            {/* Hamburger — visible on all sizes, opens the sidebar drawer */}
             <button
               type="button"
               aria-label="Toggle menu"
@@ -118,10 +115,15 @@ export function NavBar({ sidebarOpen, setSidebarOpen }: NavBarProps) {
             </button>
           </div>
 
-          {/* Center Navigation Categories with Dropdowns */}
-          <nav className="hidden lg:flex items-center gap-1 mono text-[0.82rem] font-semibold text-ink-soft shrink-0">
+          {/* CENTER: Desktop dropdown nav — hidden below lg */}
+          <nav
+            ref={desktopNavRef}
+            className="hidden lg:flex items-center gap-0.5 mono text-[0.82rem] font-semibold text-ink-soft"
+          >
+            {/* Direct Home link */}
             <NavLink
               to="/"
+              end
               className={({ isActive }) =>
                 cn(
                   'rounded-full px-3.5 py-2 transition-all hover:text-marigold hover:bg-paper-3',
@@ -132,66 +134,92 @@ export function NavBar({ sidebarOpen, setSidebarOpen }: NavBarProps) {
               Home
             </NavLink>
 
-            {NAV_CATEGORIES.map((category) => (
-              <div
-                key={category.title}
-                className="relative"
-                onMouseEnter={() => handleDropdownEnter(category.title)}
-                onMouseLeave={handleDropdownLeave}
-              >
+            {/* Category dropdowns */}
+            {NAV_CATEGORIES.map((cat) => (
+              <div key={cat.title} className="relative">
                 <button
                   type="button"
+                  onClick={() => toggleDropdown(cat.title)}
                   className={cn(
-                    'flex items-center gap-1 rounded-full px-3.5 py-2 transition-all hover:text-marigold hover:bg-paper-3',
-                    activeDropdown === category.title && 'text-marigold bg-marigold/10 font-bold'
+                    'flex items-center gap-1.5 rounded-full px-3.5 py-2 transition-all hover:text-marigold hover:bg-paper-3',
+                    activeDropdown === cat.title && 'text-marigold bg-marigold/10 font-bold'
                   )}
                 >
-                  <span>{category.title}</span>
+                  {cat.title}
+                  {/* Chevron indicator */}
+                  <svg
+                    className={cn('h-3 w-3 shrink-0 transition-transform duration-200',
+                      activeDropdown === cat.title && 'rotate-180')}
+                    fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}
+                  >
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                  </svg>
                 </button>
 
-                {/* Dropdown Menu Overlay */}
-                {activeDropdown === category.title && (
-                  <div className="absolute left-0 top-full mt-2 w-56 rounded-2xl border border-line/60 bg-paper backdrop-blur-xl p-2 shadow-xl z-50 space-y-0.5 animate-in fade-in slide-in-from-top-1 duration-150">
-                    {category.links.map((link) => (
-                      <NavLink
-                        key={link.to}
-                        to={link.to}
-                        className={({ isActive }) =>
-                          cn(
-                            'flex items-center justify-between rounded-xl px-3 py-2 text-[0.82rem] font-semibold text-ink transition-all hover:bg-marigold/10 hover:text-marigold',
-                            isActive && 'bg-marigold/15 text-marigold font-bold'
-                          )
-                        }
-                      >
-                        <span>{link.label}</span>
-                        <span className="mono text-[0.62rem] text-marigold opacity-70 font-bold">{link.code}</span>
-                      </NavLink>
-                    ))}
+                {/* ── Dropdown panel — mirrors the sidebar structure ── */}
+                {activeDropdown === cat.title && (
+                  <div className="absolute left-0 top-full mt-2 w-60 rounded-2xl border border-line/60 bg-paper shadow-2xl z-[60] overflow-hidden">
+                    {/* Category header — same style as sidebar */}
+                    <div className="mono text-[0.6rem] font-bold uppercase tracking-widest text-marigold bg-marigold/5 px-4 py-2 border-b border-line/40">
+                      {cat.title}
+                    </div>
+
+                    {/* Quick actions at top of Portal dropdown */}
+                    {cat.title === 'Portal' && !user && (
+                      <div className="grid grid-cols-2 gap-1.5 p-2 border-b border-line/40">
+                        <Link
+                          to="/register"
+                          onClick={() => setActiveDropdown(null)}
+                          className="mono text-center rounded-xl bg-marigold px-2 py-2 text-[0.72rem] font-bold text-paper hover:bg-marigold/90 transition-all"
+                        >
+                          Register
+                        </Link>
+                        <Link
+                          to="/login"
+                          onClick={() => setActiveDropdown(null)}
+                          className="mono text-center rounded-xl border border-ink/70 bg-paper px-2 py-2 text-[0.72rem] font-bold text-ink hover:border-marigold hover:text-marigold transition-all"
+                        >
+                          Log in
+                        </Link>
+                      </div>
+                    )}
+
+                    {/* Nav links — same layout as sidebar */}
+                    <div className="p-2 space-y-0.5">
+                      {cat.links.map((link) => (
+                        <NavLink
+                          key={link.to}
+                          to={link.to}
+                          end={link.to === '/'}
+                          onClick={() => setActiveDropdown(null)}
+                          className={({ isActive }) =>
+                            cn(
+                              'mono flex items-center justify-between rounded-xl px-3 py-2 text-[0.8rem] font-semibold text-ink-soft transition-all hover:bg-paper-3 hover:text-ink',
+                              isActive && 'bg-paper-3 text-ink font-bold border-l-4 border-marigold pl-2'
+                            )
+                          }
+                        >
+                          <span>{link.label}</span>
+                          <span className="mono text-[0.6rem] text-marigold font-bold opacity-70">{link.code}</span>
+                        </NavLink>
+                      ))}
+                    </div>
                   </div>
                 )}
               </div>
             ))}
           </nav>
 
-          {/* Right Action Buttons */}
-          <div className="flex items-center gap-1 sm:gap-3 shrink-0">
+          {/* RIGHT: Auth buttons */}
+          <div className="flex items-center gap-1 sm:gap-2.5 shrink-0">
             {user ? (
-              <div className="flex items-center gap-1.5 shrink-0">
-                {hasRole(user, 'coordinator') ? (
-                  <Link
-                    to="/admin"
-                    className="mono inline-flex items-center rounded-full bg-marigold px-3 py-1 sm:px-5 sm:py-2.5 text-[0.72rem] sm:text-[0.85rem] font-bold text-paper transition-all hover:scale-105 hover:bg-marigold/90 shadow-sm"
-                  >
-                    Admin
-                  </Link>
-                ) : (
-                  <Link
-                    to="/dashboard"
-                    className="mono inline-flex items-center rounded-full bg-marigold px-3 py-1 sm:px-5 sm:py-2.5 text-[0.72rem] sm:text-[0.85rem] font-bold text-paper transition-all hover:scale-105 hover:bg-marigold/90 shadow-sm"
-                  >
-                    Dashboard
-                  </Link>
-                )}
+              <div className="flex items-center gap-1.5">
+                <Link
+                  to={hasRole(user, 'coordinator') ? '/admin' : '/dashboard'}
+                  className="mono inline-flex items-center rounded-full bg-marigold px-3 py-1 sm:px-5 sm:py-2.5 text-[0.72rem] sm:text-[0.85rem] font-bold text-paper hover:scale-105 hover:bg-marigold/90 transition-all shadow-sm"
+                >
+                  {hasRole(user, 'coordinator') ? 'Admin' : 'Dashboard'}
+                </Link>
                 <button
                   onClick={logout}
                   className="mono hidden sm:inline-block rounded-full border border-line bg-paper px-3.5 py-2 text-[0.78rem] font-semibold text-ink-soft hover:border-red-500 hover:text-red-600 transition-colors"
@@ -200,46 +228,44 @@ export function NavBar({ sidebarOpen, setSidebarOpen }: NavBarProps) {
                 </button>
               </div>
             ) : (
-              <div className="flex items-center gap-1 sm:gap-2.5 shrink-0">
-                {/* LOGIN BUTTON */}
+              <div className="flex items-center gap-1 sm:gap-2">
                 <Link
                   to="/login"
-                  className="mono inline-flex items-center justify-center rounded-full border-2 border-ink/80 bg-paper px-2 py-1 text-[0.68rem] min-[360px]:px-2.5 min-[360px]:py-1 sm:px-5 sm:py-2.5 sm:text-[0.85rem] font-bold text-ink hover:border-marigold hover:text-marigold transition-all shadow-xs"
+                  className="mono inline-flex items-center justify-center rounded-full border-2 border-ink/80 bg-paper px-2 py-1 text-[0.68rem] sm:px-5 sm:py-2.5 sm:text-[0.85rem] font-bold text-ink hover:border-marigold hover:text-marigold transition-all shadow-xs"
                 >
                   Log in
                 </Link>
-
-                {/* REGISTER TEAM BUTTON */}
                 <Link
                   to="/register"
-                  className="mono inline-flex items-center justify-center rounded-full bg-marigold px-2.5 py-1 text-[0.68rem] min-[360px]:px-3 min-[360px]:py-1 sm:px-6 sm:py-2.5 sm:text-[0.88rem] font-bold text-paper transition-all hover:scale-105 hover:bg-marigold/90 shadow-md shadow-marigold/25"
+                  className="mono inline-flex items-center justify-center rounded-full bg-marigold px-2.5 py-1 text-[0.68rem] sm:px-6 sm:py-2.5 sm:text-[0.88rem] font-bold text-paper hover:scale-105 hover:bg-marigold/90 transition-all shadow-md shadow-marigold/25"
                 >
                   Register
                 </Link>
               </div>
             )}
           </div>
+
         </div>
       </header>
 
-      {/* MOBILE BACKDROP OVERLAY */}
+      {/* ── Mobile backdrop ───────────────────────────────────────────────── */}
       {sidebarOpen && (
         <div
           onClick={() => setSidebarOpen(false)}
-          className="fixed inset-0 top-14 sm:top-16 z-40 bg-ink/40 backdrop-blur-xs transition-opacity"
+          className="fixed inset-0 top-14 sm:top-16 z-40 bg-ink/40 backdrop-blur-xs"
         />
       )}
 
-      {/* SLEEK DRAWER */}
+      {/* ── Sidebar Drawer — identical to before ─────────────────────────── */}
       <aside
         ref={sidebarRef}
         className={cn(
-          'fixed top-14 sm:top-16 left-0 bottom-0 z-50 flex w-76 max-w-[85vw] flex-col border-r border-line bg-paper p-5 shadow-2xl transition-transform duration-300 overflow-y-auto pointer-events-auto h-[calc(100vh-3.5rem)] sm:h-[calc(100vh-4rem)]',
+          'fixed top-14 sm:top-16 left-0 bottom-0 z-50 flex w-76 max-w-[85vw] flex-col border-r border-line bg-paper p-5 shadow-2xl transition-transform duration-300 overflow-y-auto',
           sidebarOpen ? 'translate-x-0' : '-translate-x-full'
         )}
       >
-        {/* Quick Action Buttons */}
-        <div className="grid grid-cols-2 gap-2 pb-2">
+        {/* Quick actions at top — same as Portal dropdown quick actions */}
+        <div className="grid grid-cols-2 gap-2 pb-4 border-b border-line/30 mb-4">
           <Link
             to="/register"
             onClick={() => setSidebarOpen(false)}
@@ -250,24 +276,25 @@ export function NavBar({ sidebarOpen, setSidebarOpen }: NavBarProps) {
           <Link
             to="/login"
             onClick={() => setSidebarOpen(false)}
-            className="mono text-center rounded-xl border border-ink/70 bg-paper px-3 py-2.5 text-[0.78rem] font-bold text-ink"
+            className="mono text-center rounded-xl border border-ink/70 bg-paper px-3 py-2.5 text-[0.78rem] font-bold text-ink hover:border-marigold hover:text-marigold transition-all"
           >
             Portal Login
           </Link>
         </div>
 
-        {/* Drawer Categories & Links */}
-        <div className="mt-4 space-y-5">
-          {NAV_CATEGORIES.map((category) => (
-            <div key={category.title}>
-              <div className="mono text-[0.65rem] font-bold uppercase tracking-wider text-marigold mb-2 border-b border-line/30 pb-1">
-                {category.title}
+        {/* All nav categories — same data as desktop */}
+        <div className="space-y-5">
+          {NAV_CATEGORIES.map((cat) => (
+            <div key={cat.title}>
+              <div className="mono text-[0.62rem] font-bold uppercase tracking-widest text-marigold mb-2 border-b border-line/30 pb-1">
+                {cat.title}
               </div>
-              <div className="space-y-1">
-                {category.links.map((link) => (
+              <div className="space-y-0.5">
+                {cat.links.map((link) => (
                   <NavLink
                     key={link.to}
                     to={link.to}
+                    end={link.to === '/'}
                     onClick={() => {
                       window.scrollTo({ top: 0, behavior: 'smooth' });
                       setSidebarOpen(false);
@@ -275,7 +302,7 @@ export function NavBar({ sidebarOpen, setSidebarOpen }: NavBarProps) {
                     className={({ isActive }) =>
                       cn(
                         'mono flex items-center justify-between rounded-xl px-3 py-2 text-[0.8rem] text-ink-soft transition-all hover:bg-paper-3 hover:text-ink',
-                        isActive && 'bg-paper-3 text-ink font-bold border-l-4 border-marigold'
+                        isActive && 'bg-paper-3 text-ink font-bold border-l-4 border-marigold pl-2'
                       )
                     }
                   >
@@ -288,18 +315,15 @@ export function NavBar({ sidebarOpen, setSidebarOpen }: NavBarProps) {
           ))}
         </div>
 
-        {/* Sidebar Footer */}
-        <div className="mt-8 border-t border-line pt-4 pb-6 space-y-3">
+        {/* Sidebar footer */}
+        <div className="mt-auto pt-6 border-t border-line space-y-3">
           {user ? (
             <div className="space-y-3">
               <div className="mono text-[0.75rem] text-ink-soft">
                 Signed in as: <strong className="text-ink">{user.name}</strong>
               </div>
               <button
-                onClick={() => {
-                  logout();
-                  setSidebarOpen(false);
-                }}
+                onClick={() => { logout(); setSidebarOpen(false); }}
                 className="mono w-full rounded-xl border border-red-500/30 bg-red-500/10 px-3 py-2 text-center text-[0.78rem] font-bold text-red-600 hover:bg-red-600 hover:text-paper transition-colors"
               >
                 Log out

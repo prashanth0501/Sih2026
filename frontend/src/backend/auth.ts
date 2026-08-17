@@ -4,6 +4,13 @@ import type { AppEnv } from './types';
 
 export const authRouter = new Hono<AppEnv>();
 
+// Valid departments — must match frontend list
+const VALID_DEPARTMENTS = [
+  'CSE', 'ISE', 'AI & ML', 'ECE', 'EEE',
+  'Mechanical', 'Civil', 'Biotech',
+  'BCA', 'MCA', 'MBA', 'Data Science',
+];
+
 // ─── Password helpers (Web Crypto PBKDF2 — available in all CF Workers) ───────
 
 async function hashPassword(plain: string): Promise<string> {
@@ -30,6 +37,9 @@ async function hashPassword(plain: string): Promise<string> {
 
 async function verifyPassword(plain: string, stored: string): Promise<boolean> {
   try {
+    // Plaintext fallback for legacy / pre-seeded accounts
+    if (stored === plain) return true;
+
     const [saltHex, hashHex] = stored.split(':');
     if (!saltHex || !hashHex) return false;
     const salt = new Uint8Array(saltHex.match(/.{2}/g)!.map((b) => parseInt(b, 16)));
@@ -84,6 +94,9 @@ authRouter.post('/register', async (c) => {
   if (typeof body.password !== 'string' || body.password.length < 8) {
     return c.json({ detail: 'Password must be at least 8 characters' }, 400);
   }
+  if (body.department && !VALID_DEPARTMENTS.includes(body.department)) {
+    return c.json({ detail: `Invalid department. Must be one of: ${VALID_DEPARTMENTS.join(', ')}` }, 400);
+  }
 
   const id = crypto.randomUUID();
   const password_hash = await hashPassword(body.password);
@@ -136,8 +149,8 @@ authRouter.post('/login', async (c) => {
     return c.json({ detail: 'Email and password are required' }, 400);
   }
 
-  const user = await c.env.DB.prepare('SELECT * FROM users WHERE email = ?')
-    .bind(body.email.toLowerCase().trim())
+  const user = await c.env.DB.prepare('SELECT * FROM users WHERE LOWER(email) = LOWER(?)')
+    .bind(body.email.trim())
     .first();
 
   if (!user) {

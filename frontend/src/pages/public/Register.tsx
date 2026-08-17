@@ -9,7 +9,7 @@ import { cn } from '@/lib/utils';
 import { createTeam, type ApiTeamMember } from '@/api/teams';
 import { getSystemSettings } from '@/api/settings';
 
-const DEPARTMENTS = ['CSE', 'ISE', 'AI & ML', 'ECE', 'EEE', 'Mechanical', 'Civil', 'Biotech'];
+const DEPARTMENTS = ['CSE', 'ISE', 'AI & ML', 'ECE', 'EEE', 'Mechanical', 'Civil', 'Biotech', 'BCA', 'MCA', 'MBA', 'Data Science'];
 const STEPS = ['Step 1: Leader & Account Details', 'Step 2: Team Roster & Challenge Theme'];
 
 export function Register() {
