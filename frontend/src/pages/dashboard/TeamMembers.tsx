@@ -4,28 +4,28 @@ import { addTeamMember, getMyTeam, removeTeamMember } from '@/api/teams';
 import { Button } from '@/components/ui/Button';
 
 const DEPARTMENTS = ['CSE', 'ISE', 'AI & ML', 'ECE', 'EEE', 'Mechanical', 'Civil', 'Biotech'];
-const MAX_MEMBERS = 5;
+const MAX_MEMBERS = 6;
 
 export function TeamMembers() {
   const queryClient = useQueryClient();
   const { data: team, isLoading, error } = useQuery({ queryKey: ['my-team'], queryFn: getMyTeam, retry: false });
-  const [form, setForm] = useState({ name: '', email: '', usn: '', github_url: '', department: DEPARTMENTS[0], year: 2, role: 'member' });
+  const [form, setForm] = useState({ name: '', email: '', usn: '', github_url: '', department: DEPARTMENTS[0], year: 2, role: 'member', gender: 'Male' });
   const [formError, setFormError] = useState('');
 
   const addMutation = useMutation({
     mutationFn: (input: typeof form) => addTeamMember(team!.id, input),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['my-team'] });
-      setForm({ name: '', email: '', usn: '', github_url: '', department: DEPARTMENTS[0], year: 2, role: 'member' });
+      setForm({ name: '', email: '', usn: '', github_url: '', department: DEPARTMENTS[0], year: 2, role: 'member', gender: 'Male' });
     },
-    onError: (e: unknown) => {
-      const message = (e as { response?: { data?: { detail?: string } } })?.response?.data?.detail;
-      setFormError(message || 'Could not add that member.');
+    onError: (e: any) => {
+      const message = e?.response?.data?.detail || e?.message || 'Could not add that member.';
+      setFormError(message);
     },
   });
 
   const removeMutation = useMutation({
-    mutationFn: (email: string) => removeTeamMember(team!.id, email),
+    mutationFn: (usn: string) => removeTeamMember(team!.id, usn),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['my-team'] }),
   });
 
@@ -52,7 +52,7 @@ export function TeamMembers() {
       <h1 className="font-display text-[1.6rem] font-bold">Team members</h1>
       <p className="mt-2 text-ink-soft">
         {team.viewer_is_leader
-          ? `Only you, as team leader, can add or remove members. Up to ${MAX_MEMBERS} more — 6 total including you, per the official rule.`
+          ? `Only you, as team leader, can add or remove members. Up to 5 more — 6 total including you, per the official rule.`
           : "You're viewing this team as a member — the team leader is the only one who can add or remove people."}
       </p>
 
@@ -80,7 +80,7 @@ export function TeamMembers() {
             </div>
             {canEdit && (
               <button
-                onClick={() => removeMutation.mutate(m.email)}
+                onClick={() => removeMutation.mutate(m.usn)}
                 className="mono text-[0.68rem] text-red-700 hover:underline"
               >
                 Remove
@@ -175,6 +175,18 @@ export function TeamMembers() {
                 {[1, 2, 3, 4].map((y) => (
                   <option key={y} value={y}>Year {y}</option>
                 ))}
+              </select>
+            </label>
+            <label className="grid gap-1.5 text-[0.8rem]">
+              Gender
+              <select
+                value={form.gender}
+                onChange={(e) => setForm((f) => ({ ...f, gender: e.target.value }))}
+                className="border border-line bg-paper-2 px-4 py-2.5 outline-none focus-visible:border-marigold"
+              >
+                <option value="Male">Male</option>
+                <option value="Female">Female</option>
+                <option value="Other">Other</option>
               </select>
             </label>
           </div>

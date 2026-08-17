@@ -27,11 +27,11 @@ authRouter.post('/register', async (c) => {
 
   try {
     await c.env.DB.prepare(`
-      INSERT INTO users (id, name, email, password_hash, role, department, year, usn, github_url, created_at)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      INSERT INTO users (id, name, email, password_hash, role, department, year, usn, gender, github_url, created_at)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `).bind(
       id, body.name, body.email, password_hash, 'participant', 
-      body.department || 'CSE', body.year || 1, body.usn || null, body.github_url || null, new Date().toISOString()
+      body.department || 'CSE', body.year || 1, body.usn || null, body.gender || 'Not Specified', body.github_url || null, new Date().toISOString()
     ).run();
 
     const token = await sign({ sub: id, email: body.email, role: 'participant' }, c.env.JWT_SECRET || 'dev-only-secret-change-me', "HS256");

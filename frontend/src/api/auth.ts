@@ -9,6 +9,7 @@ export type ApiUser = {
   department?: string | null;
   year?: number | null;
   usn?: string | null;
+  gender?: string | null;
   github_url?: string | null;
 };
 
@@ -26,6 +27,7 @@ export async function apiRegister(input: {
   department: string;
   year: number;
   usn?: string;
+  gender?: string;
   github_url?: string;
 }) {
   const { data } = await api.post<TokenResponse>('/auth/register', input);

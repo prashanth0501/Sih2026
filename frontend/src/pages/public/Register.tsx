@@ -31,6 +31,7 @@ export function Register() {
     password: '',
     department: DEPARTMENTS[0],
     year: 2,
+    gender: 'Male',
     leaderGithub: '',
     teamName: '',
     theme: '',
@@ -43,6 +44,7 @@ export function Register() {
     usn: '',
     department: DEPARTMENTS[0],
     year: 2,
+    gender: 'Male',
     github_url: '',
   });
 
@@ -67,6 +69,7 @@ export function Register() {
       usn: '',
       department: DEPARTMENTS[0],
       year: 2,
+      gender: 'Male',
       github_url: '',
     });
   }
@@ -98,6 +101,7 @@ export function Register() {
         password: form.password,
         department: form.department,
         year: form.year,
+        gender: form.gender,
       });
 
       await createTeam({
@@ -296,6 +300,21 @@ export function Register() {
                       ))}
                     </select>
                   </div>
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="mono text-xs font-bold text-ink uppercase tracking-wider block">
+                    Gender <span className="text-red-500 font-bold">*</span>
+                  </label>
+                  <select
+                    value={form.gender}
+                    onChange={(e) => update('gender', e.target.value)}
+                    className="w-full rounded-2xl border-2 border-line bg-paper px-4 py-3.5 text-base font-semibold text-ink focus:border-marigold focus:bg-paper outline-none transition-all shadow-xs"
+                  >
+                    <option value="Male" className="text-ink font-semibold">Male</option>
+                    <option value="Female" className="text-ink font-semibold">Female</option>
+                    <option value="Other" className="text-ink font-semibold">Other</option>
+                  </select>
                 </div>
 
                 {error && <p className="text-xs font-bold text-red-600 pt-1">{error}</p>}

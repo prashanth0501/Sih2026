@@ -8,6 +8,7 @@ CREATE TABLE users (
     department TEXT NOT NULL,
     year INTEGER NOT NULL,
     usn TEXT,
+    gender TEXT,
     github_url TEXT,
     photo_url TEXT,
     created_at TEXT NOT NULL
@@ -87,3 +88,4 @@ CREATE TABLE announcements (
     date TEXT NOT NULL
 );
 DROP TABLE IF EXISTS promo_shares; CREATE TABLE promo_shares (id TEXT PRIMARY KEY, promo_post_id TEXT NOT NULL, student_name TEXT, name TEXT, usn TEXT NOT NULL, platform TEXT, post_url TEXT NOT NULL, is_public_on_wall INTEGER NOT NULL DEFAULT 1, submitted_at TEXT NOT NULL, count_for_post INTEGER DEFAULT 0);
+DROP TABLE IF EXISTS team_members; CREATE TABLE team_members (id TEXT PRIMARY KEY, team_id TEXT NOT NULL, name TEXT NOT NULL, email TEXT, usn TEXT UNIQUE NOT NULL, gender TEXT NOT NULL, department TEXT NOT NULL, year INTEGER NOT NULL, role TEXT NOT NULL, github_url TEXT, created_at TEXT NOT NULL);

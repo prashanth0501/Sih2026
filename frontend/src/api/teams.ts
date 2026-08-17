@@ -7,6 +7,7 @@ export type ApiTeamMember = {
   department: string;
   year: number;
   role: string;
+  gender: string;
   github_url?: string;
 };
 
@@ -59,8 +60,8 @@ export async function addTeamMember(teamId: string, member: ApiTeamMember) {
   return data;
 }
 
-export async function removeTeamMember(teamId: string, email: string) {
-  const { data } = await api.delete<ApiTeam>(`/teams/${teamId}/members/${encodeURIComponent(email)}`);
+export async function removeTeamMember(teamId: string, usn: string) {
+  const { data } = await api.delete<ApiTeam>(`/teams/${teamId}/members/${encodeURIComponent(usn)}`);
   return data;
 }
 
