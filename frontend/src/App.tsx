@@ -23,6 +23,9 @@ import { SparkStory } from '@/pages/public/SparkStory';
 import { SpreadTheSpark } from '@/pages/public/SpreadTheSpark';
 import { Login } from '@/pages/public/Login';
 import { Register } from '@/pages/public/Register';
+import { ForgotPassword } from '@/pages/public/ForgotPassword';
+import { ResetPassword } from '@/pages/public/ResetPassword';
+import { VerifyEmail } from '@/pages/public/VerifyEmail';
 import { PrivacyPolicy } from '@/pages/public/PrivacyPolicy';
 
 import { DashboardHome } from '@/pages/dashboard/DashboardHome';
@@ -31,7 +34,6 @@ import { TeamMembers } from '@/pages/dashboard/TeamMembers';
 import { DashboardAnnouncements } from '@/pages/dashboard/DashboardAnnouncements';
 
 import { AdminHome } from '@/pages/admin/AdminHome';
-import { TeamLock } from '@/pages/admin/TeamLock';
 import { Registrations } from '@/pages/admin/Registrations';
 import { ScreeningConsole } from '@/pages/admin/ScreeningConsole';
 import { PromotionComposer } from '@/pages/admin/PromotionComposer';
@@ -60,7 +62,6 @@ const DASHBOARD_NAV = [
 
 const ADMIN_NAV = [
   { to: '/admin', label: 'Overview' },
-  { to: '/admin/teams', label: 'Finalise teams' },
   { to: '/admin/registrations', label: 'Registrations' },
   { to: '/admin/screening', label: 'Screening console' },
   { to: '/admin/promotions', label: 'Promotion composer' },
@@ -92,6 +93,9 @@ function App() {
               <Route path="contact" element={<Contact />} />
               <Route path="login" element={<Login />} />
               <Route path="register" element={<Register />} />
+              <Route path="forgot-password" element={<ForgotPassword />} />
+              <Route path="reset-password" element={<ResetPassword />} />
+              <Route path="verify-email" element={<VerifyEmail />} />
               <Route path="privacy" element={<PrivacyPolicy />} />
             </Route>
 
@@ -107,7 +111,6 @@ function App() {
             <Route path="admin" element={<AdminGate />}>
               <Route element={<AppShell title="Admin" navItems={ADMIN_NAV} />}>
                 <Route index element={<AdminHome />} />
-                <Route path="teams" element={<TeamLock />} />
                 <Route path="registrations" element={<Registrations />} />
                 <Route path="screening" element={<ScreeningConsole />} />
                 <Route path="promotions" element={<PromotionComposer />} />

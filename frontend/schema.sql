@@ -11,6 +11,28 @@ CREATE TABLE users (
     gender TEXT,
     github_url TEXT,
     photo_url TEXT,
+    email_verified INTEGER NOT NULL DEFAULT 0,
+    email_verified_at TEXT,
+    verification_token TEXT,
+    verification_expires_at TEXT,
+    password_reset_token TEXT,
+    password_reset_expires_at TEXT,
+    is_disabled INTEGER NOT NULL DEFAULT 0,
+    failed_login_attempts INTEGER NOT NULL DEFAULT 0,
+    locked_until TEXT,
+    created_at TEXT NOT NULL
+);
+
+DROP TABLE IF EXISTS audit_logs;
+CREATE TABLE audit_logs (
+    id TEXT PRIMARY KEY,
+    actor_id TEXT,
+    actor_email TEXT,
+    action TEXT NOT NULL,
+    target_id TEXT,
+    details_json TEXT,
+    ip_address TEXT,
+    user_agent TEXT,
     created_at TEXT NOT NULL
 );
 
@@ -94,11 +116,12 @@ DROP TABLE IF EXISTS team_members; CREATE TABLE team_members (id TEXT PRIMARY KE
 INSERT OR IGNORE INTO system_settings (id, registration_open, level1_open, level2_open, updated_at)
 VALUES ('global_settings', 1, 1, 1, '2026-08-17T00:00:00.000Z');
 
--- Default accounts (admin/coordinator/demo)
-INSERT OR IGNORE INTO users (id, name, email, password_hash, role, department, year, usn, gender, github_url, created_at)
+-- Default accounts (admin/coordinator/demo - marked as verified)
+INSERT OR IGNORE INTO users (id, name, email, password_hash, role, department, year, usn, gender, github_url, email_verified, email_verified_at, created_at)
 VALUES 
-('seed-user-1', 'Partha Shankar', 'parthashankar21@gmail.com', 'coordinator123', 'coordinator', 'CSE', 4, '1NC22CS001', 'Male', 'https://github.com/parthashankar', '2026-08-17T00:00:00.000Z'),
-('seed-user-2', 'Nirmith M Jain', 'nirmithmjain@gmail.com', 'coordinator123', 'coordinator', 'CSE', 4, '1NC22CS002', 'Male', 'https://github.com/nirmithmjain', '2026-08-17T00:00:00.000Z'),
-('seed-user-3', 'Dr. Bhargava R', 'dr.bhargava@ncetmail.com', 'spoc123', 'spoc', 'CSE', 4, '1NC20CS000', 'Male', 'https://github.com/drbhargava', '2026-08-17T00:00:00.000Z'),
-('seed-user-4', 'Demo Participant', 'participant@nagarjuna.edu', 'participant123', 'participant', 'CSE', 2, '1NC22CS005', 'Male', 'https://github.com/demoparticipant', '2026-08-17T00:00:00.000Z');
+('seed-user-1', 'Partha Shankar', 'parthashankar21@gmail.com', 'coordinator123', 'coordinator', 'CSE', 4, '1NC22CS001', 'Male', 'https://github.com/parthashankar', 1, '2026-08-17T00:00:00.000Z', '2026-08-17T00:00:00.000Z'),
+('seed-user-2', 'Nirmith M Jain', 'nirmithmjain@gmail.com', 'coordinator123', 'coordinator', 'CSE', 4, '1NC22CS002', 'Male', 'https://github.com/nirmithmjain', 1, '2026-08-17T00:00:00.000Z', '2026-08-17T00:00:00.000Z'),
+('seed-user-3', 'Dr. Bhargava R', 'dr.bhargava@ncetmail.com', 'spoc123', 'spoc', 'CSE', 4, '1NC20CS000', 'Male', 'https://github.com/drbhargava', 1, '2026-08-17T00:00:00.000Z', '2026-08-17T00:00:00.000Z'),
+('seed-user-4', 'Demo Participant', 'participant@nagarjuna.edu', 'participant123', 'participant', 'CSE', 2, '1NC22CS005', 'Male', 'https://github.com/demoparticipant', 1, '2026-08-17T00:00:00.000Z', '2026-08-17T00:00:00.000Z');
+
 

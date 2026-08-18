@@ -72,9 +72,14 @@ export function Login() {
 
             {/* Password Field */}
             <div className="space-y-1.5">
-              <label className="mono text-xs font-bold text-ink uppercase tracking-wider block">
-                Password <span className="text-red-500 font-bold">*</span>
-              </label>
+              <div className="flex items-center justify-between">
+                <label className="mono text-xs font-bold text-ink uppercase tracking-wider block">
+                  Password <span className="text-red-500 font-bold">*</span>
+                </label>
+                <Link to="/forgot-password" className="mono text-xs font-bold text-marigold hover:underline">
+                  Forgot password?
+                </Link>
+              </div>
               <input
                 type="password"
                 required

@@ -161,8 +161,7 @@ pre {
 
 .mono {
   font-family: var(--font-mono);
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
+  letter-spacing: 0.04em;
 }
 
 .grain {

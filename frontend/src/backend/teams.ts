@@ -6,6 +6,46 @@ export const teamsRouter = new Hono<AppEnv>();
 
 teamsRouter.use('*', authMiddleware);
 
+// Helper to verify team ownership (Leader or Staff)
+async function verifyTeamOwnership(c: any, teamId: string) {
+  const user = c.get('user');
+
+  // Staff (coordinator/spoc/admin) always bypasses team leader ownership check
+  if (['coordinator', 'spoc', 'admin'].includes(user.role)) {
+    const team = await c.env.DB.prepare('SELECT * FROM teams WHERE id = ?').bind(teamId).first();
+    return { allowed: true, team, isStaff: true };
+  }
+
+  // Fetch logged-in user's USN
+  const dbUser = await c.env.DB.prepare('SELECT usn FROM users WHERE email = ?')
+    .bind(user.email)
+    .first();
+
+  if (!dbUser || !dbUser.usn) {
+    return {
+      allowed: false,
+      response: c.json({ detail: 'Forbidden — USN not found on user account' }, 403),
+    };
+  }
+
+  const team = await c.env.DB.prepare('SELECT * FROM teams WHERE id = ?').bind(teamId).first();
+  if (!team) {
+    return {
+      allowed: false,
+      response: c.json({ detail: 'Team not found' }, 404),
+    };
+  }
+
+  if (team.leader_usn !== dbUser.usn) {
+    return {
+      allowed: false,
+      response: c.json({ detail: 'Forbidden — Only the team leader can modify team settings' }, 403),
+    };
+  }
+
+  return { allowed: true, team, dbUser, isStaff: false };
+}
+
 // ─── POST /teams — Create a new team ──────────────────────────────────────────
 
 teamsRouter.post('/', async (c) => {
@@ -36,7 +76,6 @@ teamsRouter.post('/', async (c) => {
     .first();
   if (existing) return c.json({ detail: 'You are already registered in a team' }, 400);
 
-  // Validate additional members (BUG 4 fix — they were silently discarded before)
   const additionalMembers: any[] = Array.isArray(body.members) ? body.members : [];
 
   // Check for duplicate USNs in the submitted member list
@@ -85,9 +124,9 @@ teamsRouter.post('/', async (c) => {
       )
       .run();
 
-    // 3. BUG 4 FIX — Insert additional members that were silently discarded before
+    // 3. Insert additional members
     for (const member of additionalMembers) {
-      if (!member.usn || !member.name) continue; // skip incomplete entries
+      if (!member.usn || !member.name) continue;
       try {
         await c.env.DB.prepare(
           `INSERT INTO team_members (id, team_id, name, email, usn, gender, department, year, role, github_url, created_at)
@@ -108,7 +147,7 @@ teamsRouter.post('/', async (c) => {
           )
           .run();
       } catch {
-        // USN already in another team — skip silently, team is still created
+        // USN already in another team — skip silently
       }
     }
 
@@ -121,7 +160,7 @@ teamsRouter.post('/', async (c) => {
   }
 });
 
-// ─── GET /teams/mine — Get the current user's team ────────────────────────────
+// ─── GET /teams/mine — Get current user's team ─────────────────────────────────
 
 teamsRouter.get('/mine', async (c) => {
   const user = c.get('user');
@@ -130,7 +169,6 @@ teamsRouter.get('/mine', async (c) => {
     .bind(user.email)
     .first();
 
-  // BUG 6 FIX — return 404 instead of 200 null so axios throws and frontend can handle gracefully
   if (!dbUser || !dbUser.usn) return c.json({ detail: 'No team found — USN not set on account' }, 404);
 
   const member = await c.env.DB.prepare(
@@ -176,24 +214,20 @@ teamsRouter.get('/mine', async (c) => {
   });
 });
 
-// ─── POST /teams/:id/members — Add a member to existing team ──────────────────
+// ─── POST /teams/:id/members — Add a member (Strict Leader Ownership Check) ───
 
 teamsRouter.post('/:id/members', async (c) => {
   const teamId = c.req.param('id');
-  const body = await c.req.json();
-  const id = crypto.randomUUID();
+  const ownership = await verifyTeamOwnership(c, teamId);
+  if (!ownership.allowed) return ownership.response;
 
+  const team = ownership.team;
+  if (team.is_locked) return c.json({ detail: 'Team is locked — no changes allowed' }, 400);
+
+  const body = await c.req.json();
   if (!body.usn || !body.name) {
     return c.json({ detail: 'Member name and USN are required' }, 400);
   }
-
-  const team = await c.env.DB.prepare(
-    'SELECT is_locked, leader_usn FROM teams WHERE id = ?'
-  )
-    .bind(teamId)
-    .first();
-  if (!team) return c.json({ detail: 'Team not found' }, 404);
-  if (team.is_locked) return c.json({ detail: 'Team is locked — no changes allowed' }, 400);
 
   // Check member count (max 6 total including leader)
   const { results: currentMembers } = await c.env.DB.prepare(
@@ -205,6 +239,7 @@ teamsRouter.post('/:id/members', async (c) => {
     return c.json({ detail: 'Team already has the maximum of 6 members' }, 400);
   }
 
+  const id = crypto.randomUUID();
   try {
     await c.env.DB.prepare(
       `INSERT INTO team_members (id, team_id, name, email, usn, gender, department, year, role, github_url, created_at)
@@ -234,18 +269,16 @@ teamsRouter.post('/:id/members', async (c) => {
   }
 });
 
-// ─── DELETE /teams/:id/members/:usn — Remove a member ────────────────────────
+// ─── DELETE /teams/:id/members/:usn — Remove member (Strict Leader Check) ────
 
 teamsRouter.delete('/:id/members/:usn', async (c) => {
   const teamId = c.req.param('id');
   const usn = c.req.param('usn');
 
-  const team = await c.env.DB.prepare(
-    'SELECT is_locked, leader_usn FROM teams WHERE id = ?'
-  )
-    .bind(teamId)
-    .first();
-  if (!team) return c.json({ detail: 'Team not found' }, 404);
+  const ownership = await verifyTeamOwnership(c, teamId);
+  if (!ownership.allowed) return ownership.response;
+
+  const team = ownership.team;
   if (team.is_locked) return c.json({ detail: 'Team is locked — no changes allowed' }, 400);
   if (team.leader_usn === usn) return c.json({ detail: 'Cannot remove the team leader' }, 400);
 
@@ -257,10 +290,13 @@ teamsRouter.delete('/:id/members/:usn', async (c) => {
   return c.json({ success: true });
 });
 
-// ─── PATCH /teams/:id/lock — Lock / unlock team ───────────────────────────────
+// ─── PATCH /teams/:id/lock — Lock / unlock team (Strict Leader Check) ─────────
 
 teamsRouter.patch('/:id/lock', async (c) => {
   const teamId = c.req.param('id');
+  const ownership = await verifyTeamOwnership(c, teamId);
+  if (!ownership.allowed) return ownership.response;
+
   const body = await c.req.json();
 
   if (body.locked) {
@@ -290,10 +326,13 @@ teamsRouter.patch('/:id/lock', async (c) => {
   return c.json({ success: true });
 });
 
-// ─── POST /teams/:id/submissions — Submit PPT or Demo URL ─────────────────────
+// ─── POST /teams/:id/submissions — Submit PPT/Demo (Strict Leader Check) ──────
 
 teamsRouter.post('/:id/submissions', async (c) => {
   const teamId = c.req.param('id');
+  const ownership = await verifyTeamOwnership(c, teamId);
+  if (!ownership.allowed) return ownership.response;
+
   const body = await c.req.json();
   const level = Number(body.level);
   const url = String(body.submission_url || '').trim();
@@ -301,9 +340,6 @@ teamsRouter.post('/:id/submissions', async (c) => {
   if (!url || !url.startsWith('http')) {
     return c.json({ detail: 'Valid submission URL (e.g. Google Drive link) is required' }, 400);
   }
-
-  const team = await c.env.DB.prepare('SELECT id FROM teams WHERE id = ?').bind(teamId).first();
-  if (!team) return c.json({ detail: 'Team not found' }, 404);
 
   if (level === 1) {
     await c.env.DB.prepare(
@@ -396,9 +432,14 @@ teamsRouter.patch('/:id', async (c) => {
   });
 });
 
-// ─── GET /teams — Admin: list all teams ───────────────────────────────────────
+// ─── GET /teams — Admin only (Strict Coordinator+ Requirement) ────────────────
 
 teamsRouter.get('/', async (c) => {
+  const user = c.get('user');
+  if (!['coordinator', 'spoc', 'admin'].includes(user.role)) {
+    return c.json({ detail: 'Forbidden — Coordinator or higher required' }, 403);
+  }
+
   const { results } = await c.env.DB.prepare(
     `SELECT teams.*,
       (SELECT json_group_array(json_object('name', name, 'usn', usn, 'gender', gender, 'role', role, 'department', department, 'year', year, 'email', email, 'github_url', github_url))

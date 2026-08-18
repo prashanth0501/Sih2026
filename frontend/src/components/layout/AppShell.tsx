@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link, NavLink, Outlet } from 'react-router-dom';
+import { Link, NavLink, Outlet, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/lib/auth';
 import { cn } from '@/lib/utils';
 
@@ -7,7 +7,13 @@ export type AppNavItem = { to: string; label: string };
 
 export function AppShell({ title, navItems }: { title: string; navItems: AppNavItem[] }) {
   const { user, logout } = useAuth();
+  const navigate = useNavigate();
   const [mobileOpen, setMobileOpen] = useState(false);
+
+  const handleLogout = () => {
+    logout();
+    navigate('/', { replace: true });
+  };
 
   return (
     <div className="min-h-screen bg-paper-2">
@@ -35,7 +41,7 @@ export function AppShell({ title, navItems }: { title: string; navItems: AppNavI
         <div className="mono flex items-center gap-3 text-[0.72rem] text-ink-soft">
           <span className="hidden text-ink sm:inline font-medium">{user?.name}</span>
           <button
-            onClick={logout}
+            onClick={handleLogout}
             className="rounded bg-paper-3 px-2.5 py-1 text-marigold hover:underline sm:bg-transparent sm:p-0"
           >
             Log out

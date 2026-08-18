@@ -18,3 +18,32 @@ backend/**/__pycache__/
 # frontend
 frontend/node_modules/
 frontend/dist/
+
+# Local audit reports, backups, and scratch scripts — kept local only
+backup/
+scratch/
+authentication-audit.md
+authentication-verification-report.md
+backup-validation-report.md
+backup-verification-report.md
+backward-compatibility-report.md
+build-verification-report.md
+database-migration-plan.md
+deployment-plan.md
+email-system-report.md
+endpoint-permission-matrix.md
+FINAL_PRE_DEPLOYMENT_VERIFICATION.md
+jwt-transition-strategy.md
+manual-qa-checklist.md
+MASTER_AUDIT_VERIFICATION_REPORT.md
+migration-audit-report.md
+production-readiness-report.md
+rbac-verification-report.md
+remaining-risks.md
+resend-architecture-design.md
+rollback-validation-plan.md
+security-audit-v2.md
+security-risk-assessment.md
+staging-validation-checklist.md
+test-suite-report.md
+CHANGELOG_VERIFICATION.md
