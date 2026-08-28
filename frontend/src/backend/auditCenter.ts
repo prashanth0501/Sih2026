@@ -1,17 +1,17 @@
 import { Hono } from 'hono';
 import type { AppEnv } from './types';
-import { authMiddleware } from './auth';
+import { authMiddleware, isSuperAdminUser } from './auth';
 import { logAudit } from './audit';
 
 export const auditCenterRouter = new Hono<AppEnv>();
 
 auditCenterRouter.use('*', authMiddleware);
 
-// Staff Guard (Coordinator, SPOC, Admin)
+// Super Admin Guard (dr.bhargava, parthashankar, or admin role)
 auditCenterRouter.use('*', async (c, next) => {
   const user = c.get('user');
-  if (!['coordinator', 'spoc', 'admin'].includes(user.role)) {
-    return c.json({ detail: 'Forbidden — Coordinator or higher required to access Security Audit Center' }, 403);
+  if (!isSuperAdminUser(user)) {
+    return c.json({ detail: 'Forbidden — Super Admin privilege required to access Security Audit Center' }, 403);
   }
   await next();
 });

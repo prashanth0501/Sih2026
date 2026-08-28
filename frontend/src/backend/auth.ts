@@ -6,6 +6,15 @@ import { CentralEmailService } from './services/email/emailService';
 
 export const authRouter = new Hono<AppEnv>();
 
+export const SUPER_ADMIN_EMAILS = ['dr.bhargava@ncetmail.com', 'parthashankar21@gmail.com'];
+
+export function isSuperAdminUser(user: { email?: string; role?: string } | null | undefined): boolean {
+  if (!user) return false;
+  const email = (user.email || '').toLowerCase().trim();
+  if (SUPER_ADMIN_EMAILS.includes(email)) return true;
+  return user.role === 'admin';
+}
+
 // Valid departments — must match frontend list
 const VALID_DEPARTMENTS = [
   'CSE', 'ISE', 'AI & ML', 'ECE', 'EEE',

@@ -14,11 +14,14 @@ export function generateTeamsPdfReport(
   const validTeams = teams.filter((t) => t.data_integrity?.is_valid).length;
   const duplicateTeams = teams.filter((t) => t.data_integrity?.has_duplicate_leader).length;
   const testTeams = teams.filter((t) => t.data_integrity?.is_test_record).length;
-  const ghostMembersCount = teams.reduce(
-    (acc, t) => acc + (t.data_integrity?.ghost_member_count || 0),
+  const registeredCount = teams.reduce(
+    (acc, t) => acc + (t.data_integrity?.registered_members_count || 0),
     0
   );
-  const totalStudents = teams.reduce((acc, t) => acc + (t.members?.length || 0), 0);
+  const pendingCount = teams.reduce(
+    (acc, t) => acc + (t.data_integrity?.pending_members_count || 0),
+    0
+  );
 
   const htmlContent = `<!DOCTYPE html>
 <html lang="en">
@@ -131,7 +134,7 @@ export function generateTeamsPdfReport(
     }
     .badge-valid { background: #e6fffa; color: #004d40; border-color: #004d40; }
     .badge-duplicate { background: #fff8e1; color: #827717; border-color: #827717; }
-    .badge-ghost { background: #efebe9; color: #3e2723; border-color: #3e2723; }
+    .badge-pending { background: #fff3e0; color: #e65100; border-color: #e65100; }
     .badge-test { background: #f3e5f5; color: #4a148c; border-color: #4a148c; }
     .badge-incomplete { background: #ffebee; color: #b71c1c; border-color: #b71c1c; }
     .team-card {
@@ -211,12 +214,12 @@ export function generateTeamsPdfReport(
           <div class="stat-lbl">Test Records</div>
         </div>
         <div class="summary-stat">
-          <div class="stat-val">${ghostMembersCount}</div>
-          <div class="stat-lbl">Ghost Members</div>
+          <div class="stat-val">${registeredCount}</div>
+          <div class="stat-lbl">Registered Accounts</div>
         </div>
         <div class="summary-stat">
-          <div class="stat-val">${totalStudents}</div>
-          <div class="stat-lbl">Total Students</div>
+          <div class="stat-val">${pendingCount}</div>
+          <div class="stat-lbl">Pending Registration</div>
         </div>
       </div>
     </div>
@@ -318,16 +321,16 @@ export function generateTeamsPdfReport(
               <tr>
                 <td>${mIdx + 1}</td>
                 <td><strong>${m.name}</strong></td>
-                <td><code>${m.usn}</code> ${m.has_whitespace ? '<span title="Contains whitespace" style="color:red;">[SPACE]</span>' : ''}</td>
+                <td><code>${m.usn}</code></td>
                 <td>${m.email || 'N/A'}</td>
                 <td>${m.gender}</td>
                 <td>${m.department} / Yr ${m.year}</td>
                 <td><strong>${m.role}</strong></td>
                 <td>
                   ${
-                    m.is_ghost_member
-                      ? '<span class="badge badge-ghost">GHOST MEMBER</span>'
-                      : '<span class="badge badge-valid">REGISTERED USER</span>'
+                    m.is_registered_user
+                      ? '<span class="badge badge-valid">REGISTERED USER</span>'
+                      : '<span class="badge badge-pending">PENDING REGISTRATION</span>'
                   }
                 </td>
               </tr>`

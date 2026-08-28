@@ -5,6 +5,7 @@ import { STATUS_LABEL, type ScreeningStatus } from '@/lib/data';
 import { StatusBadge } from '@/components/ui/StatusBadge';
 import { Button } from '@/components/ui/Button';
 import { generateTeamsPdfReport } from '@/utils/pdfExport';
+import { useAuth, isSuperAdmin } from '@/lib/auth';
 
 const PAGE_SIZE = 25;
 const STATUS_OPTIONS: Array<ScreeningStatus | 'all'> = [
@@ -13,6 +14,9 @@ const STATUS_OPTIONS: Array<ScreeningStatus | 'all'> = [
 ];
 
 export function Registrations() {
+  const { user } = useAuth();
+  const superAdmin = isSuperAdmin(user);
+
   const queryClient = useQueryClient();
   const [query, setQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<ScreeningStatus | 'all'>('all');
@@ -60,9 +64,11 @@ export function Registrations() {
     },
   });
 
-  // Calculate total metrics
+  // Calculate member registration counts
   const totalTeamsCount = teams.length;
   const totalStudentsCount = teams.reduce((s, t) => s + (t.members?.length || 0), 0);
+  const registeredStudentsCount = teams.reduce((s, t) => s + (t.data_integrity?.registered_members_count || 0), 0);
+  const pendingStudentsCount = teams.reduce((s, t) => s + (t.data_integrity?.pending_members_count || 0), 0);
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -74,7 +80,7 @@ export function Registrations() {
         if (integrityFilter === 'valid' && !t.data_integrity?.is_valid) return false;
         if (integrityFilter === 'issues' && t.data_integrity?.is_valid) return false;
         if (integrityFilter === 'duplicate' && !flags.includes('DUPLICATE')) return false;
-        if (integrityFilter === 'ghost' && !flags.includes('GHOST MEMBER')) return false;
+        if (integrityFilter === 'pending' && (t.data_integrity?.pending_members_count || 0) === 0) return false;
         if (integrityFilter === 'test' && !flags.includes('TEST RECORD')) return false;
       }
 
@@ -116,9 +122,11 @@ export function Registrations() {
     <div>
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <h1 className="font-display text-[1.6rem] font-bold">Team Registrations &amp; Audit Roster</h1>
+          <h1 className="font-display text-[1.6rem] font-bold">Team Registrations &amp; Roster</h1>
           <p className="mt-1 text-[0.85rem] text-ink-soft">
-            {isLoading ? 'Loading dynamic database records...' : `${totalTeamsCount} teams registered · ${totalStudentsCount} students total`}
+            {isLoading
+              ? 'Loading dynamic database records...'
+              : `${totalTeamsCount} teams registered · ${totalStudentsCount} total students (${registeredStudentsCount} registered accounts, ${pendingStudentsCount} pending registration)`}
           </p>
         </div>
 
@@ -172,7 +180,7 @@ export function Registrations() {
           <option value="valid">Valid Teams Only</option>
           <option value="issues">Has Integrity Flags</option>
           <option value="duplicate">Duplicates Only</option>
-          <option value="ghost">Ghost Members Only</option>
+          <option value="pending">Has Pending Registrations</option>
           <option value="test">Test Records Only</option>
         </select>
       </div>
@@ -220,7 +228,6 @@ export function Registrations() {
                       {flags.map((f, fIdx) => {
                         let badgeStyle = 'border-emerald-600/30 bg-emerald-50 text-emerald-800';
                         if (f === 'DUPLICATE') badgeStyle = 'border-amber-600/30 bg-amber-50 text-amber-900';
-                        if (f === 'GHOST MEMBER') badgeStyle = 'border-stone-600/30 bg-stone-100 text-stone-800';
                         if (f === 'TEST RECORD') badgeStyle = 'border-purple-600/30 bg-purple-50 text-purple-900';
                         if (f === 'INCOMPLETE' || f === 'NO FEMALE MEMBER') badgeStyle = 'border-red-600/30 bg-red-50 text-red-900';
                         if (f === 'SPACED USN') badgeStyle = 'border-yellow-600/30 bg-yellow-50 text-yellow-900';
@@ -281,7 +288,7 @@ export function Registrations() {
         </div>
       </div>
 
-      {/* TEAM DETAILS MODAL WITH COMPLETE VISIBILITY */}
+      {/* TEAM DETAILS MODAL */}
       {selectedTeam && (
         <div
           onClick={() => setSelectedTeam(null)}
@@ -311,7 +318,7 @@ export function Registrations() {
               {/* DATA INTEGRITY FINDINGS BANNER */}
               <div className="rounded-xl border border-line bg-paper-2 p-4 text-[0.82rem]">
                 <div className="text-[0.7rem] font-bold text-ink-soft uppercase tracking-wider mb-2 flex items-center justify-between">
-                  <span>Data Integrity Classification &amp; Findings</span>
+                  <span>Data Integrity Classification &amp; Member Status</span>
                   <div className="flex gap-1">
                     {(selectedTeam.data_integrity?.flags || ['VALID']).map((f, idx) => (
                       <span key={idx} className="inline-block border border-ink/30 px-1.5 py-0.5 text-[0.65rem] font-bold rounded uppercase bg-paper text-ink">
@@ -320,6 +327,11 @@ export function Registrations() {
                     ))}
                   </div>
                 </div>
+
+                <div className="mb-2 text-[0.8rem] font-medium text-ink">
+                  Roster Breakdown: <strong>{selectedTeam.data_integrity?.registered_members_count || 0}</strong> registered accounts · <strong>{selectedTeam.data_integrity?.pending_members_count || 0}</strong> pending registration
+                </div>
+
                 {selectedTeam.data_integrity?.findings && selectedTeam.data_integrity.findings.length > 0 ? (
                   <ul className="list-disc list-inside space-y-1 text-ink text-[0.8rem]">
                     {selectedTeam.data_integrity.findings.map((finding, idx) => (
@@ -327,12 +339,12 @@ export function Registrations() {
                     ))}
                   </ul>
                 ) : (
-                  <p className="text-emerald-800 font-medium">✓ No data integrity issues found. All team rules and relationships are valid.</p>
+                  <p className="text-emerald-800 font-medium">✓ No data integrity issues found. All team rules are valid.</p>
                 )}
               </div>
 
-              {/* Admin Edit Mode Form */}
-              {isEditing ? (
+              {/* Admin Edit Mode Form (Super Admin Only) */}
+              {isEditing && superAdmin ? (
                 <form
                   onSubmit={(e) => {
                     e.preventDefault();
@@ -347,7 +359,7 @@ export function Registrations() {
                   className="space-y-4 rounded-xl border border-marigold/40 bg-marigold/5 p-4"
                 >
                   <div className="text-[0.75rem] font-bold text-marigold uppercase tracking-wider">
-                    Edit Team Attributes
+                    Edit Team Attributes (Super Admin Only)
                   </div>
 
                   <div className="grid gap-3 sm:grid-cols-2">
@@ -406,13 +418,13 @@ export function Registrations() {
                     </Button>
                   </div>
                 </form>
-              ) : isSoftDeleting ? (
+              ) : isSoftDeleting && superAdmin ? (
                 <div className="space-y-4 rounded-xl border border-red-300 bg-red-50 p-4">
                   <div className="text-[0.75rem] font-bold text-red-800 uppercase tracking-wider">
-                    Soft Delete Team (Preserves Data)
+                    Soft Delete Team (Super Admin Only — Preserves Data)
                   </div>
                   <p className="text-[0.8rem] text-red-700">
-                    This will move team <strong>{selectedTeam.name}</strong> to the soft-delete archive. Data is fully preserved and can be restored anytime by an administrator.
+                    This will move team <strong>{selectedTeam.name}</strong> to the soft-delete archive. Data is fully preserved and can be restored anytime by a Super Administrator.
                   </p>
                   <div>
                     <label className="text-[0.72rem] font-medium text-red-900 block mb-1">Reason for Soft Delete</label>
@@ -449,20 +461,22 @@ export function Registrations() {
                     <span className="text-[0.7rem] font-semibold text-ink-soft uppercase tracking-wider block">Theme / Category</span>
                     <span className="font-medium text-ink mt-0.5 block">{selectedTeam.theme || 'Unassigned'}</span>
                   </div>
-                  <div className="sm:text-right flex items-center justify-end gap-2">
-                    <button
-                      onClick={() => setIsEditing(true)}
-                      className="rounded-lg border border-line bg-paper px-3 py-1.5 text-[0.75rem] font-semibold text-ink hover:border-marigold transition-colors"
-                    >
-                      Edit Info ✏️
-                    </button>
-                    <button
-                      onClick={() => setIsSoftDeleting(true)}
-                      className="rounded-lg border border-red-200 bg-red-50 px-3 py-1.5 text-[0.75rem] font-semibold text-red-800 hover:bg-red-100 transition-colors"
-                    >
-                      Soft Delete 🗑️
-                    </button>
-                  </div>
+                  {superAdmin && (
+                    <div className="sm:text-right flex items-center justify-end gap-2">
+                      <button
+                        onClick={() => setIsEditing(true)}
+                        className="rounded-lg border border-line bg-paper px-3 py-1.5 text-[0.75rem] font-semibold text-ink hover:border-marigold transition-colors"
+                      >
+                        Edit Info ✏️
+                      </button>
+                      <button
+                        onClick={() => setIsSoftDeleting(true)}
+                        className="rounded-lg border border-red-200 bg-red-50 px-3 py-1.5 text-[0.75rem] font-semibold text-red-800 hover:bg-red-100 transition-colors"
+                      >
+                        Soft Delete 🗑️
+                      </button>
+                    </div>
+                  )}
                 </div>
               )}
 
@@ -520,7 +534,7 @@ export function Registrations() {
                         <th className="px-3.5 py-2.5">USN</th>
                         <th className="px-3.5 py-2.5">Email</th>
                         <th className="px-3.5 py-2.5">Dept &amp; Year</th>
-                        <th className="px-3.5 py-2.5">Account Status</th>
+                        <th className="px-3.5 py-2.5">Portal Registration Status</th>
                         <th className="px-3.5 py-2.5 text-right">GitHub</th>
                       </tr>
                     </thead>
@@ -537,9 +551,6 @@ export function Registrations() {
                           </td>
                           <td className="font-mono px-3.5 py-2.5 text-ink text-[0.8rem]">
                             {m.usn}
-                            {m.has_whitespace && (
-                              <span className="ml-1 text-yellow-700 font-sans text-[0.65rem] font-bold" title="Contains leading/trailing whitespace">[SPACE]</span>
-                            )}
                           </td>
                           <td className="font-mono px-3.5 py-2.5 text-ink-soft text-[0.8rem] lowercase">
                             {m.email || '—'}
@@ -548,13 +559,13 @@ export function Registrations() {
                             {m.department || 'CSE'} (Yr {m.year || 3})
                           </td>
                           <td className="px-3.5 py-2.5">
-                            {m.is_ghost_member ? (
-                              <span className="inline-block border border-stone-500/30 bg-stone-100 text-stone-800 px-1.5 py-0.5 text-[0.65rem] font-bold rounded uppercase">
-                                GHOST MEMBER
+                            {m.is_registered_user ? (
+                              <span className="inline-block border border-emerald-600/30 bg-emerald-50 text-emerald-800 px-1.5 py-0.5 text-[0.65rem] font-bold rounded uppercase">
+                                REGISTERED USER
                               </span>
                             ) : (
-                              <span className="inline-block border border-emerald-600/30 bg-emerald-50 text-emerald-800 px-1.5 py-0.5 text-[0.65rem] font-bold rounded uppercase">
-                                REGISTERED
+                              <span className="inline-block border border-amber-600/30 bg-amber-50 text-amber-800 px-1.5 py-0.5 text-[0.65rem] font-bold rounded uppercase">
+                                PENDING REGISTRATION
                               </span>
                             )}
                           </td>

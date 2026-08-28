@@ -1,6 +1,6 @@
 import { Hono } from 'hono';
 import type { AppEnv } from './types';
-import { authMiddleware } from './auth';
+import { authMiddleware, isSuperAdminUser } from './auth';
 import { logAudit } from './audit';
 
 export const teamsRouter = new Hono<AppEnv>();
@@ -440,12 +440,12 @@ teamsRouter.post('/:id/screening/:level/review', async (c) => {
   return c.json({ success: true });
 });
 
-// ─── PATCH /teams/:id — Admin edit team details ────────────────────────────────
+// ─── PATCH /teams/:id — Admin edit team details (Super Admin Only) ──────────────
 
 teamsRouter.patch('/:id', async (c) => {
   const user = c.get('user');
-  if (!['coordinator', 'spoc', 'admin'].includes(user.role)) {
-    return c.json({ detail: 'Forbidden — coordinator or higher required' }, 403);
+  if (!isSuperAdminUser(user)) {
+    return c.json({ detail: 'Forbidden — Super Admin privilege required to edit team attributes' }, 403);
   }
 
   const teamId = c.req.param('id');
@@ -495,12 +495,12 @@ teamsRouter.patch('/:id', async (c) => {
   });
 });
 
-// ─── DELETE /teams/:id — Admin Soft Delete Team ───────────────────────────────
+// ─── DELETE /teams/:id — Admin Soft Delete Team (Super Admin Only) ────────────
 
 teamsRouter.delete('/:id', async (c) => {
   const user = c.get('user');
-  if (!['coordinator', 'spoc', 'admin'].includes(user.role)) {
-    return c.json({ detail: 'Forbidden — coordinator or higher required' }, 403);
+  if (!isSuperAdminUser(user)) {
+    return c.json({ detail: 'Forbidden — Super Admin privilege required to delete teams' }, 403);
   }
 
   const teamId = c.req.param('id');
@@ -547,12 +547,12 @@ teamsRouter.delete('/:id', async (c) => {
   return c.json({ success: true, message: 'Team soft-deleted successfully' });
 });
 
-// ─── GET /teams/deleted — List Soft-Deleted Teams ─────────────────────────────
+// ─── GET /teams/deleted — List Soft-Deleted Teams (Super Admin Only) ──────────
 
 teamsRouter.get('/deleted', async (c) => {
   const user = c.get('user');
-  if (!['coordinator', 'spoc', 'admin'].includes(user.role)) {
-    return c.json({ detail: 'Forbidden — coordinator or higher required' }, 403);
+  if (!isSuperAdminUser(user)) {
+    return c.json({ detail: 'Forbidden — Super Admin privilege required to view deleted teams' }, 403);
   }
 
   const { results } = await c.env.DB.prepare(
@@ -563,7 +563,7 @@ teamsRouter.get('/deleted', async (c) => {
     results.map((d: any) => {
       let data: any = {};
       try {
-        data = JSON.parse(d.original_data_json || '{}');
+        data = JSON.parse(String(d.original_data_json || '{}'));
       } catch {
         data = {};
       }
@@ -583,12 +583,12 @@ teamsRouter.get('/deleted', async (c) => {
   );
 });
 
-// ─── POST /teams/:id/restore — Restore Soft-Deleted Team ──────────────────────
+// ─── POST /teams/:id/restore — Restore Soft-Deleted Team (Super Admin Only) ───
 
 teamsRouter.post('/:id/restore', async (c) => {
   const user = c.get('user');
-  if (!['coordinator', 'spoc', 'admin'].includes(user.role)) {
-    return c.json({ detail: 'Forbidden — coordinator or higher required' }, 403);
+  if (!isSuperAdminUser(user)) {
+    return c.json({ detail: 'Forbidden — Super Admin privilege required to restore teams' }, 403);
   }
 
   const deletedId = c.req.param('id');
@@ -640,7 +640,7 @@ teamsRouter.post('/:id/restore', async (c) => {
   return c.json({ success: true, message: 'Team restored successfully' });
 });
 
-// ─── GET /teams — Admin only with Complete Data Integrity Classification ─────
+// ─── GET /teams — Admin list with Complete Data Integrity Classification ─────
 
 teamsRouter.get('/', async (c) => {
   const user = c.get('user');
@@ -648,7 +648,7 @@ teamsRouter.get('/', async (c) => {
     return c.json({ detail: 'Forbidden — Coordinator or higher required' }, 403);
   }
 
-  // Fetch all registered users for Ghost Member detection
+  // Fetch all registered users for registered vs pending member calculation
   const { results: allUsers } = await c.env.DB.prepare(
     'SELECT usn, email FROM users'
   ).all();
@@ -683,15 +683,23 @@ teamsRouter.get('/', async (c) => {
         members = [];
       }
 
-      // Enrich members with Ghost Member indicator
+      let registeredMembersCount = 0;
+      let pendingMembersCount = 0;
+
       const enrichedMembers = members.map((m: any) => {
         const cleanUsn = String(m.usn || '').trim().toUpperCase();
         const cleanEmail = String(m.email || '').trim().toLowerCase();
-        const isGhost = Boolean(cleanUsn && !registeredUsns.has(cleanUsn) && (!cleanEmail || !registeredEmails.has(cleanEmail)));
+        const isRegistered = Boolean(cleanUsn && registeredUsns.has(cleanUsn)) || Boolean(cleanEmail && registeredEmails.has(cleanEmail));
+        if (isRegistered) {
+          registeredMembersCount++;
+        } else {
+          pendingMembersCount++;
+        }
         return {
           ...m,
+          usn: String(m.usn || '').trim(),
           has_whitespace: m.usn !== String(m.usn).trim(),
-          is_ghost_member: isGhost,
+          is_registered_user: isRegistered,
         };
       });
 
@@ -710,12 +718,6 @@ teamsRouter.get('/', async (c) => {
       if (normLeaderUsn === '1NFWHDIW' || t.name === 'Warriors') {
         flags.push('TEST RECORD');
         findings.push('Developer test account / dummy registration.');
-      }
-
-      const ghostMembers = enrichedMembers.filter((m: any) => m.is_ghost_member);
-      if (ghostMembers.length > 0) {
-        flags.push('GHOST MEMBER');
-        findings.push(`${ghostMembers.length} member(s) have no registered portal user account.`);
       }
 
       const whitespaceUsns = enrichedMembers.filter((m: any) => m.has_whitespace);
@@ -742,7 +744,7 @@ teamsRouter.get('/', async (c) => {
       return {
         id: t.id,
         name: t.name,
-        leader_usn: t.leader_usn,
+        leader_usn: String(t.leader_usn || '').trim(),
         theme: t.theme,
         problem_statement_id: t.problem_statement_id || null,
         status: t.status,
@@ -752,7 +754,8 @@ teamsRouter.get('/', async (c) => {
           flags,
           findings,
           is_valid: flags.length === 1 && flags[0] === 'VALID',
-          ghost_member_count: ghostMembers.length,
+          registered_members_count: registeredMembersCount,
+          pending_members_count: pendingMembersCount,
           has_duplicate_leader: hasDuplicateLeader,
           is_test_record: flags.includes('TEST RECORD'),
         },

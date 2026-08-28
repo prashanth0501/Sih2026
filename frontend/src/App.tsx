@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Outlet } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { AuthProvider } from '@/lib/auth';
 import { ProtectedRoute } from '@/components/ProtectedRoute';
@@ -63,16 +63,33 @@ const DASHBOARD_NAV = [
   { to: '/spread-the-spark', label: 'Spread the Spark' },
 ];
 
-const ADMIN_NAV = [
-  { to: '/admin', label: 'Overview' },
-  { to: '/admin/registrations', label: 'Registrations' },
-  { to: '/admin/users', label: 'User directory' },
-  { to: '/admin/deleted-teams', label: 'Deleted teams' },
-  { to: '/admin/screening', label: 'Screening console' },
-  { to: '/admin/audit-logs', label: 'Security audit center' },
-  { to: '/admin/promotions', label: 'Promotion composer' },
-  { to: '/admin/updates', label: 'Updates composer' },
-];
+import { useAuth, isSuperAdmin } from '@/lib/auth';
+import { AdminLogin } from '@/pages/admin/AdminLogin';
+
+function AdminShell() {
+  const { user } = useAuth();
+  const superAdmin = isSuperAdmin(user);
+
+  const navItems = [
+    { to: '/admin', label: 'Overview' },
+    { to: '/admin/registrations', label: 'Registrations' },
+    ...(superAdmin ? [{ to: '/admin/users', label: 'User directory' }] : []),
+    ...(superAdmin ? [{ to: '/admin/deleted-teams', label: 'Deleted teams' }] : []),
+    { to: '/admin/screening', label: 'Screening console' },
+    ...(superAdmin ? [{ to: '/admin/audit-logs', label: 'Security audit center' }] : []),
+    { to: '/admin/promotions', label: 'Promotion composer' },
+    { to: '/admin/updates', label: 'Updates composer' },
+  ];
+
+  return <AppShell title="Admin" navItems={navItems} />;
+}
+
+function SuperAdminGate() {
+  const { user, ready } = useAuth();
+  if (!ready) return null;
+  if (!user || !isSuperAdmin(user)) return <AdminLogin denied />;
+  return <Outlet />;
+}
 
 function App() {
   return (
@@ -115,16 +132,20 @@ function App() {
             </Route>
 
             <Route path="admin" element={<AdminGate />}>
-              <Route element={<AppShell title="Admin" navItems={ADMIN_NAV} />}>
+              <Route element={<AdminShell />}>
                 <Route index element={<AdminHome />} />
                 <Route path="registrations" element={<Registrations />} />
-                <Route path="users" element={<UserDirectory />} />
-                <Route path="deleted-teams" element={<DeletedTeams />} />
                 <Route path="screening" element={<ScreeningConsole />} />
-                <Route path="audit-logs" element={<AuditLogsPage />} />
                 <Route path="promotions" element={<PromotionComposer />} />
                 <Route path="promotions/:postId" element={<PromoPostDetails />} />
                 <Route path="updates" element={<UpdatesComposer />} />
+                
+                {/* Super Admin Restricted Routes */}
+                <Route element={<SuperAdminGate />}>
+                  <Route path="users" element={<UserDirectory />} />
+                  <Route path="deleted-teams" element={<DeletedTeams />} />
+                  <Route path="audit-logs" element={<AuditLogsPage />} />
+                </Route>
               </Route>
             </Route>
           </Routes>

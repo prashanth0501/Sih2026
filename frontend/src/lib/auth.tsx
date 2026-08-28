@@ -97,3 +97,12 @@ export function hasRole(user: User | null, minimum: Role): boolean {
   if (!user) return false;
   return ROLE_RANK[user.role] >= ROLE_RANK[minimum];
 }
+
+export const SUPER_ADMIN_EMAILS = ['dr.bhargava@ncetmail.com', 'parthashankar21@gmail.com'];
+
+export function isSuperAdmin(user: User | null): boolean {
+  if (!user) return false;
+  const email = (user.email || '').toLowerCase().trim();
+  if (SUPER_ADMIN_EMAILS.includes(email)) return true;
+  return user.role === 'admin';
+}

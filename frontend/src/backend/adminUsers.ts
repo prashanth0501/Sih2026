@@ -1,6 +1,6 @@
 import { Hono } from 'hono';
 import type { AppEnv } from './types';
-import { authMiddleware } from './auth';
+import { authMiddleware, isSuperAdminUser } from './auth';
 import { logAudit } from './audit';
 import { CentralEmailService } from './services/email/emailService';
 
@@ -8,11 +8,11 @@ export const adminUsersRouter = new Hono<AppEnv>();
 
 adminUsersRouter.use('*', authMiddleware);
 
-// Middleware to enforce coordinator or higher
+// Middleware to enforce Super Admin requirement (dr.bhargava, parthashankar, or admin role)
 adminUsersRouter.use('*', async (c, next) => {
   const user = c.get('user');
-  if (!['coordinator', 'spoc', 'admin'].includes(user.role)) {
-    return c.json({ detail: 'Forbidden — Coordinator or higher required' }, 403);
+  if (!isSuperAdminUser(user)) {
+    return c.json({ detail: 'Forbidden — Super Admin privilege required' }, 403);
   }
   await next();
 });

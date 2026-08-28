@@ -10,7 +10,7 @@ export type ApiTeamMember = {
   role: string;
   gender: string;
   github_url?: string;
-  is_ghost_member?: boolean;
+  is_registered_user?: boolean;
   has_whitespace?: boolean;
 };
 
@@ -25,7 +25,8 @@ export type ApiDataIntegrity = {
   flags: string[];
   findings: string[];
   is_valid: boolean;
-  ghost_member_count: number;
+  registered_members_count: number;
+  pending_members_count: number;
   has_duplicate_leader: boolean;
   is_test_record: boolean;
 };
