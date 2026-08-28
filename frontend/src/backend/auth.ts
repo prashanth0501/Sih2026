@@ -123,7 +123,7 @@ export const authMiddleware = async (c: any, next: any) => {
 
     // 2. Lookup user in DB to verify account status (active vs disabled)
     const user = await c.env.DB.prepare(
-      'SELECT id, email, role, is_disabled FROM users WHERE email = ?'
+      'SELECT id, name, email, role, department, year, usn, is_disabled FROM users WHERE email = ?'
     )
       .bind(payload.email)
       .first();
@@ -133,10 +133,18 @@ export const authMiddleware = async (c: any, next: any) => {
       return c.json({ detail: 'Your account has been disabled. Please contact administrator support.' }, 401);
     }
 
+    const sid = (payload.sid as string) || `sess_${(user.id as string).slice(0, 8)}`;
+
     c.set('user', {
       sub: user.id,
-      email: user.email,
-      role: user.role,
+      id: user.id,
+      name: user.name as string,
+      email: user.email as string,
+      role: user.role as string,
+      department: user.department as string,
+      year: user.year as any,
+      usn: user.usn as string,
+      sid: sid,
       ...payload,
     });
     await next();
@@ -312,14 +320,16 @@ authRouter.post('/login', async (c) => {
     .bind(user.id)
     .run();
 
-  // Issue Hardened JWT with 24h Expiry
+  // Issue Hardened JWT with 24h Expiry & Session Tracking
   const nowSeconds = Math.floor(Date.now() / 1000);
   const secret = c.env.JWT_SECRET || 'dev-only-secret-change-me';
+  const sid = `sess_${crypto.randomUUID()}`;
   const token = await sign(
     {
       sub: user.id,
       email: user.email,
       role: user.role,
+      sid: sid,
       iss: 'ignite-sih',
       aud: 'ignite-portal',
       iat: nowSeconds,
@@ -342,7 +352,7 @@ authRouter.post('/login', async (c) => {
     email_verified: Boolean(user.email_verified),
   };
 
-  await logAudit(c, 'LOGIN_SUCCESS', user.id as string, { email: emailClean });
+  await logAudit(c, 'LOGIN_SUCCESS', user.id as string, { email: emailClean, user_name: user.name, role: user.role, session_id: sid }, { sessionId: sid });
 
   return c.json({ access_token: token, token_type: 'bearer', user: returnUser });
 });

@@ -1,9 +1,10 @@
 import { useMemo, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { listAllTeams, adminUpdateTeam, type ApiTeam, type ApiTeamMember } from '@/api/teams';
+import { listAllTeams, adminUpdateTeam, softDeleteTeam, type ApiTeam, type ApiTeamMember } from '@/api/teams';
 import { STATUS_LABEL, type ScreeningStatus } from '@/lib/data';
 import { StatusBadge } from '@/components/ui/StatusBadge';
 import { Button } from '@/components/ui/Button';
+import { generateTeamsPdfReport } from '@/utils/pdfExport';
 
 const PAGE_SIZE = 25;
 const STATUS_OPTIONS: Array<ScreeningStatus | 'all'> = [
@@ -15,9 +16,12 @@ export function Registrations() {
   const queryClient = useQueryClient();
   const [query, setQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<ScreeningStatus | 'all'>('all');
+  const [integrityFilter, setIntegrityFilter] = useState<string>('all');
   const [page, setPage] = useState(1);
   const [selectedTeam, setSelectedTeam] = useState<ApiTeam | null>(null);
   const [isEditing, setIsEditing] = useState(false);
+  const [isSoftDeleting, setIsSoftDeleting] = useState(false);
+  const [deleteReason, setDeleteReason] = useState('');
 
   // Edit form state
   const [editName, setEditName] = useState('');
@@ -27,7 +31,7 @@ export function Registrations() {
 
   const { data: teams = [], isLoading } = useQuery({
     queryKey: ['all-teams-registrations'],
-    queryFn: () => listAllTeams({ page_size: 500 }),
+    queryFn: () => listAllTeams({ page_size: 1000 }),
     refetchInterval: 5000,
   });
 
@@ -46,6 +50,16 @@ export function Registrations() {
     },
   });
 
+  const deleteMutation = useMutation({
+    mutationFn: (input: { id: string; reason: string }) => softDeleteTeam(input.id, input.reason),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['all-teams-registrations'] });
+      setSelectedTeam(null);
+      setIsSoftDeleting(false);
+      setDeleteReason('');
+    },
+  });
+
   // Calculate total metrics
   const totalTeamsCount = teams.length;
   const totalStudentsCount = teams.reduce((s, t) => s + (t.members?.length || 0), 0);
@@ -54,15 +68,26 @@ export function Registrations() {
     const q = query.trim().toLowerCase();
     return teams.filter((t) => {
       if (statusFilter !== 'all' && t.status !== statusFilter) return false;
+
+      if (integrityFilter !== 'all') {
+        const flags = t.data_integrity?.flags || ['VALID'];
+        if (integrityFilter === 'valid' && !t.data_integrity?.is_valid) return false;
+        if (integrityFilter === 'issues' && t.data_integrity?.is_valid) return false;
+        if (integrityFilter === 'duplicate' && !flags.includes('DUPLICATE')) return false;
+        if (integrityFilter === 'ghost' && !flags.includes('GHOST MEMBER')) return false;
+        if (integrityFilter === 'test' && !flags.includes('TEST RECORD')) return false;
+      }
+
       if (!q) return true;
       return (
         t.name.toLowerCase().includes(q) ||
         (t.theme && t.theme.toLowerCase().includes(q)) ||
         (t.problem_statement_id && t.problem_statement_id.toLowerCase().includes(q)) ||
-        t.members?.some((m) => m.name.toLowerCase().includes(q) || (m.email && m.email.toLowerCase().includes(q)))
+        t.leader_usn?.toLowerCase().includes(q) ||
+        t.members?.some((m) => m.name.toLowerCase().includes(q) || (m.email && m.email.toLowerCase().includes(q)) || m.usn.toLowerCase().includes(q))
       );
     });
-  }, [teams, query, statusFilter]);
+  }, [teams, query, statusFilter, integrityFilter]);
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
   const page_ = Math.min(page, totalPages);
@@ -75,96 +100,156 @@ export function Registrations() {
     setEditPsId(t.problem_statement_id || '');
     setEditStatus(t.status);
     setIsEditing(false);
+    setIsSoftDeleting(false);
+  };
+
+  const handleExportPdf = (mode: 'all' | 'filtered') => {
+    const listToExport = mode === 'filtered' ? filtered : teams;
+    const filterName = mode === 'filtered' ? `Filtered (${filtered.length} Teams)` : 'All Records (Everything Included)';
+    generateTeamsPdfReport(listToExport, {
+      title: `SIH 2026 Portal — Teams PDF Export (${mode})`,
+      filterName,
+    });
   };
 
   return (
     <div>
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <h1 className="font-display text-[1.6rem] font-bold">Team Registrations</h1>
+          <h1 className="font-display text-[1.6rem] font-bold">Team Registrations &amp; Audit Roster</h1>
           <p className="mt-1 text-[0.85rem] text-ink-soft">
             {isLoading ? 'Loading dynamic database records...' : `${totalTeamsCount} teams registered · ${totalStudentsCount} students total`}
           </p>
         </div>
 
-        {/* Search and Filters */}
-        <div className="flex flex-wrap gap-2.5">
-          <input
-            type="search"
-            value={query}
-            onChange={(e) => {
-              setQuery(e.target.value);
-              setPage(1);
-            }}
-            placeholder="Search team name, PS ID, members…"
-            className="w-64 border border-line bg-paper px-4 py-2.5 text-[0.85rem] rounded-xl outline-none focus-visible:border-marigold"
-          />
-          <select
-            value={statusFilter}
-            onChange={(e) => {
-              setStatusFilter(e.target.value as ScreeningStatus | 'all');
-              setPage(1);
-            }}
-            className="border border-line bg-paper px-3 py-2.5 text-[0.85rem] rounded-xl outline-none focus-visible:border-marigold"
-          >
-            {STATUS_OPTIONS.map((s) => (
-              <option key={s} value={s}>
-                {s === 'all' ? 'All statuses' : STATUS_LABEL[s]}
-              </option>
-            ))}
-          </select>
+        {/* PDF Export Buttons */}
+        <div className="flex gap-2">
+          <Button variant="secondary" onClick={() => handleExportPdf('all')}>
+            📄 Export All PDF ({teams.length})
+          </Button>
+          <Button variant="primary" onClick={() => handleExportPdf('filtered')}>
+            📊 Export Filtered PDF ({filtered.length})
+          </Button>
         </div>
       </div>
 
+      {/* Search and Filters */}
+      <div className="mt-5 flex flex-wrap gap-2.5 items-center">
+        <input
+          type="search"
+          value={query}
+          onChange={(e) => {
+            setQuery(e.target.value);
+            setPage(1);
+          }}
+          placeholder="Search team name, leader USN, PS ID, member USN…"
+          className="w-72 border border-line bg-paper px-4 py-2 text-[0.85rem] rounded-xl outline-none focus-visible:border-marigold"
+        />
+        <select
+          value={statusFilter}
+          onChange={(e) => {
+            setStatusFilter(e.target.value as ScreeningStatus | 'all');
+            setPage(1);
+          }}
+          className="border border-line bg-paper px-3 py-2 text-[0.85rem] rounded-xl outline-none focus-visible:border-marigold"
+        >
+          {STATUS_OPTIONS.map((s) => (
+            <option key={s} value={s}>
+              {s === 'all' ? 'All statuses' : STATUS_LABEL[s]}
+            </option>
+          ))}
+        </select>
+
+        <select
+          value={integrityFilter}
+          onChange={(e) => {
+            setIntegrityFilter(e.target.value);
+            setPage(1);
+          }}
+          className="border border-line bg-paper px-3 py-2 text-[0.85rem] rounded-xl outline-none focus-visible:border-marigold font-medium"
+        >
+          <option value="all">All Integrity Statuses</option>
+          <option value="valid">Valid Teams Only</option>
+          <option value="issues">Has Integrity Flags</option>
+          <option value="duplicate">Duplicates Only</option>
+          <option value="ghost">Ghost Members Only</option>
+          <option value="test">Test Records Only</option>
+        </select>
+      </div>
+
       {/* Data Table */}
-      <div className="mt-6 overflow-x-auto border border-line bg-paper rounded-2xl shadow-xs">
-        <table className="w-full min-w-[850px] border-collapse text-[0.85rem]">
+      <div className="mt-5 overflow-x-auto border border-line bg-paper rounded-2xl shadow-xs">
+        <table className="w-full min-w-[950px] border-collapse text-[0.85rem]">
           <thead>
-            <tr className="border-b border-line text-left text-[0.7rem] font-semibold text-ink-soft uppercase tracking-wider">
+            <tr className="border-b border-line text-left text-[0.7rem] font-semibold text-ink-soft uppercase tracking-wider bg-paper-2">
               <th className="px-4 py-3.5">Team Name</th>
+              <th className="px-4 py-3.5">Leader USN</th>
               <th className="px-4 py-3.5">Problem ID</th>
               <th className="px-4 py-3.5">Members</th>
-              <th className="px-4 py-3.5">Theme</th>
               <th className="px-4 py-3.5">Status</th>
+              <th className="px-4 py-3.5">Data Integrity Flags</th>
               <th className="px-4 py-3.5 text-right">Action</th>
             </tr>
           </thead>
           <tbody>
-            {rows.map((t: ApiTeam) => (
-              <tr
-                key={t.id}
-                onClick={() => openTeamModal(t)}
-                className="border-b border-line last:border-0 hover:bg-paper-2 cursor-pointer transition-colors"
-              >
-                <td className="px-4 py-3.5 font-bold text-ink">
-                  {t.name}
-                </td>
-                <td className="font-mono px-4 py-3.5 text-marigold font-bold text-[0.82rem]">
-                  {t.problem_statement_id || '—'}
-                </td>
-                <td className="px-4 py-3.5 text-ink-soft font-medium">
-                  {t.members?.length || 0} members
-                </td>
-                <td className="max-w-[200px] truncate px-4 py-3.5 text-ink-soft">{t.theme || 'Unassigned'}</td>
-                <td className="px-4 py-3.5">
-                  <StatusBadge status={t.status as ScreeningStatus} />
-                </td>
-                <td className="px-4 py-3.5 text-right">
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      openTeamModal(t);
-                    }}
-                    className="rounded-lg border border-line bg-paper-3 px-3 py-1.5 text-[0.75rem] font-semibold text-ink hover:border-marigold transition-colors"
-                  >
-                    View Details →
-                  </button>
-                </td>
-              </tr>
-            ))}
+            {rows.map((t: ApiTeam) => {
+              const flags = t.data_integrity?.flags || ['VALID'];
+              return (
+                <tr
+                  key={t.id}
+                  onClick={() => openTeamModal(t)}
+                  className="border-b border-line last:border-0 hover:bg-paper-2 cursor-pointer transition-colors"
+                >
+                  <td className="px-4 py-3.5 font-bold text-ink">
+                    {t.name}
+                  </td>
+                  <td className="font-mono px-4 py-3.5 text-ink-soft text-[0.82rem]">
+                    {t.leader_usn}
+                  </td>
+                  <td className="font-mono px-4 py-3.5 text-marigold font-bold text-[0.82rem]">
+                    {t.problem_statement_id || '—'}
+                  </td>
+                  <td className="px-4 py-3.5 text-ink-soft font-medium">
+                    {t.members?.length || 0} members
+                  </td>
+                  <td className="px-4 py-3.5">
+                    <StatusBadge status={t.status as ScreeningStatus} />
+                  </td>
+                  <td className="px-4 py-3.5">
+                    <div className="flex flex-wrap gap-1">
+                      {flags.map((f, fIdx) => {
+                        let badgeStyle = 'border-emerald-600/30 bg-emerald-50 text-emerald-800';
+                        if (f === 'DUPLICATE') badgeStyle = 'border-amber-600/30 bg-amber-50 text-amber-900';
+                        if (f === 'GHOST MEMBER') badgeStyle = 'border-stone-600/30 bg-stone-100 text-stone-800';
+                        if (f === 'TEST RECORD') badgeStyle = 'border-purple-600/30 bg-purple-50 text-purple-900';
+                        if (f === 'INCOMPLETE' || f === 'NO FEMALE MEMBER') badgeStyle = 'border-red-600/30 bg-red-50 text-red-900';
+                        if (f === 'SPACED USN') badgeStyle = 'border-yellow-600/30 bg-yellow-50 text-yellow-900';
+
+                        return (
+                          <span key={fIdx} className={`inline-block border px-1.5 py-0.5 text-[0.65rem] font-bold rounded uppercase tracking-wide ${badgeStyle}`}>
+                            {f}
+                          </span>
+                        );
+                      })}
+                    </div>
+                  </td>
+                  <td className="px-4 py-3.5 text-right">
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        openTeamModal(t);
+                      }}
+                      className="rounded-lg border border-line bg-paper-3 px-3 py-1.5 text-[0.75rem] font-semibold text-ink hover:border-marigold transition-colors"
+                    >
+                      View Details →
+                    </button>
+                  </td>
+                </tr>
+              );
+            })}
             {rows.length === 0 && (
               <tr>
-                <td colSpan={6} className="px-4 py-12 text-center text-ink-soft">
+                <td colSpan={7} className="px-4 py-12 text-center text-ink-soft">
                   {isLoading ? 'Loading records from backend...' : 'No registered teams match your selected filters.'}
                 </td>
               </tr>
@@ -196,7 +281,7 @@ export function Registrations() {
         </div>
       </div>
 
-      {/* MINIMALISTIC, PROFESSIONAL TEAM DETAILS MODAL */}
+      {/* TEAM DETAILS MODAL WITH COMPLETE VISIBILITY */}
       {selectedTeam && (
         <div
           onClick={() => setSelectedTeam(null)}
@@ -204,7 +289,7 @@ export function Registrations() {
         >
           <div
             onClick={(e) => e.stopPropagation()}
-            className="w-full max-w-2xl rounded-2xl border border-line bg-paper shadow-2xl overflow-hidden max-h-[90vh] flex flex-col"
+            className="w-full max-w-3xl rounded-2xl border border-line bg-paper shadow-2xl overflow-hidden max-h-[92vh] flex flex-col"
           >
             {/* Modal Header */}
             <div className="flex items-center justify-between border-b border-line px-6 py-4 bg-paper-2">
@@ -223,6 +308,29 @@ export function Registrations() {
 
             {/* Modal Scrollable Body */}
             <div className="p-6 space-y-6 overflow-y-auto flex-1">
+              {/* DATA INTEGRITY FINDINGS BANNER */}
+              <div className="rounded-xl border border-line bg-paper-2 p-4 text-[0.82rem]">
+                <div className="text-[0.7rem] font-bold text-ink-soft uppercase tracking-wider mb-2 flex items-center justify-between">
+                  <span>Data Integrity Classification &amp; Findings</span>
+                  <div className="flex gap-1">
+                    {(selectedTeam.data_integrity?.flags || ['VALID']).map((f, idx) => (
+                      <span key={idx} className="inline-block border border-ink/30 px-1.5 py-0.5 text-[0.65rem] font-bold rounded uppercase bg-paper text-ink">
+                        {f}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+                {selectedTeam.data_integrity?.findings && selectedTeam.data_integrity.findings.length > 0 ? (
+                  <ul className="list-disc list-inside space-y-1 text-ink text-[0.8rem]">
+                    {selectedTeam.data_integrity.findings.map((finding, idx) => (
+                      <li key={idx} className="text-amber-900 font-medium">{finding}</li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p className="text-emerald-800 font-medium">✓ No data integrity issues found. All team rules and relationships are valid.</p>
+                )}
+              </div>
+
               {/* Admin Edit Mode Form */}
               {isEditing ? (
                 <form
@@ -258,7 +366,7 @@ export function Registrations() {
                         value={editPsId}
                         onChange={(e) => setEditPsId(e.target.value)}
                         placeholder="e.g. SIH1450"
-                        className="w-full border border-line bg-paper px-3 py-2 text-[0.85rem] rounded-lg outline-none focus:border-marigold"
+                        className="w-full border border-line bg-paper px-3 py-2 text-[0.85rem] rounded-lg outline-none focus:border-marigold font-mono"
                       />
                     </div>
                   </div>
@@ -298,6 +406,38 @@ export function Registrations() {
                     </Button>
                   </div>
                 </form>
+              ) : isSoftDeleting ? (
+                <div className="space-y-4 rounded-xl border border-red-300 bg-red-50 p-4">
+                  <div className="text-[0.75rem] font-bold text-red-800 uppercase tracking-wider">
+                    Soft Delete Team (Preserves Data)
+                  </div>
+                  <p className="text-[0.8rem] text-red-700">
+                    This will move team <strong>{selectedTeam.name}</strong> to the soft-delete archive. Data is fully preserved and can be restored anytime by an administrator.
+                  </p>
+                  <div>
+                    <label className="text-[0.72rem] font-medium text-red-900 block mb-1">Reason for Soft Delete</label>
+                    <input
+                      value={deleteReason}
+                      onChange={(e) => setDeleteReason(e.target.value)}
+                      placeholder="e.g. Duplicate team registration created by mistake"
+                      className="w-full border border-red-300 bg-paper px-3 py-2 text-[0.85rem] rounded-lg outline-none focus:border-red-500"
+                    />
+                  </div>
+                  <div className="flex gap-2 justify-end pt-2">
+                    <Button type="button" variant="ghost" onClick={() => setIsSoftDeleting(false)}>
+                      Cancel
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="primary"
+                      className="bg-red-700 hover:bg-red-800 text-white"
+                      disabled={deleteMutation.isPending}
+                      onClick={() => deleteMutation.mutate({ id: selectedTeam.id, reason: deleteReason })}
+                    >
+                      {deleteMutation.isPending ? 'Archiving...' : 'Confirm Soft Delete'}
+                    </Button>
+                  </div>
+                </div>
               ) : (
                 /* Overview Grid */
                 <div className="rounded-xl border border-line bg-paper-2 p-4 grid gap-4 sm:grid-cols-3 text-[0.85rem]">
@@ -309,12 +449,18 @@ export function Registrations() {
                     <span className="text-[0.7rem] font-semibold text-ink-soft uppercase tracking-wider block">Theme / Category</span>
                     <span className="font-medium text-ink mt-0.5 block">{selectedTeam.theme || 'Unassigned'}</span>
                   </div>
-                  <div className="sm:text-right flex items-center justify-end">
+                  <div className="sm:text-right flex items-center justify-end gap-2">
                     <button
                       onClick={() => setIsEditing(true)}
                       className="rounded-lg border border-line bg-paper px-3 py-1.5 text-[0.75rem] font-semibold text-ink hover:border-marigold transition-colors"
                     >
                       Edit Info ✏️
+                    </button>
+                    <button
+                      onClick={() => setIsSoftDeleting(true)}
+                      className="rounded-lg border border-red-200 bg-red-50 px-3 py-1.5 text-[0.75rem] font-semibold text-red-800 hover:bg-red-100 transition-colors"
+                    >
+                      Soft Delete 🗑️
                     </button>
                   </div>
                 </div>
@@ -367,12 +513,14 @@ export function Registrations() {
                 </div>
 
                 <div className="overflow-x-auto rounded-xl border border-line bg-paper">
-                  <table className="w-full min-w-[550px] border-collapse text-[0.82rem]">
+                  <table className="w-full min-w-[600px] border-collapse text-[0.82rem]">
                     <thead>
                       <tr className="border-b border-line text-left text-[0.68rem] font-semibold text-ink-soft uppercase tracking-wider bg-paper-2">
                         <th className="px-3.5 py-2.5">Name</th>
+                        <th className="px-3.5 py-2.5">USN</th>
                         <th className="px-3.5 py-2.5">Email</th>
                         <th className="px-3.5 py-2.5">Dept &amp; Year</th>
+                        <th className="px-3.5 py-2.5">Account Status</th>
                         <th className="px-3.5 py-2.5 text-right">GitHub</th>
                       </tr>
                     </thead>
@@ -387,11 +535,28 @@ export function Registrations() {
                               </span>
                             )}
                           </td>
+                          <td className="font-mono px-3.5 py-2.5 text-ink text-[0.8rem]">
+                            {m.usn}
+                            {m.has_whitespace && (
+                              <span className="ml-1 text-yellow-700 font-sans text-[0.65rem] font-bold" title="Contains leading/trailing whitespace">[SPACE]</span>
+                            )}
+                          </td>
                           <td className="font-mono px-3.5 py-2.5 text-ink-soft text-[0.8rem] lowercase">
                             {m.email || '—'}
                           </td>
                           <td className="px-3.5 py-2.5 text-ink-soft">
                             {m.department || 'CSE'} (Yr {m.year || 3})
+                          </td>
+                          <td className="px-3.5 py-2.5">
+                            {m.is_ghost_member ? (
+                              <span className="inline-block border border-stone-500/30 bg-stone-100 text-stone-800 px-1.5 py-0.5 text-[0.65rem] font-bold rounded uppercase">
+                                GHOST MEMBER
+                              </span>
+                            ) : (
+                              <span className="inline-block border border-emerald-600/30 bg-emerald-50 text-emerald-800 px-1.5 py-0.5 text-[0.65rem] font-bold rounded uppercase">
+                                REGISTERED
+                              </span>
+                            )}
                           </td>
                           <td className="px-3.5 py-2.5 text-right">
                             {m.github_url ? (

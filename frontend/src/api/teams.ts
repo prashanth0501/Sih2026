@@ -1,6 +1,7 @@
 import { api } from './client';
 
 export type ApiTeamMember = {
+  id?: string;
   name: string;
   email: string;
   usn: string;
@@ -9,6 +10,8 @@ export type ApiTeamMember = {
   role: string;
   gender: string;
   github_url?: string;
+  is_ghost_member?: boolean;
+  has_whitespace?: boolean;
 };
 
 export type ApiScreeningRound = {
@@ -16,6 +19,15 @@ export type ApiScreeningRound = {
   score: number | null;
   feedback: string | null;
   submission_url: string | null;
+};
+
+export type ApiDataIntegrity = {
+  flags: string[];
+  findings: string[];
+  is_valid: boolean;
+  ghost_member_count: number;
+  has_duplicate_leader: boolean;
+  is_test_record: boolean;
 };
 
 export type ApiTeam = {
@@ -31,11 +43,28 @@ export type ApiTeam = {
   viewer_is_leader: boolean;
   level1: ApiScreeningRound;
   level2: ApiScreeningRound;
+  data_integrity?: ApiDataIntegrity;
+  created_at?: string;
+  updated_at?: string;
+};
+
+export type ApiDeletedTeam = {
+  id: string;
+  original_id: string;
+  name: string;
+  leader_usn: string;
+  theme: string | null;
+  deleted_by: string;
+  deleted_at: string;
+  reason: string | null;
+  audit_reference: string | null;
+  members: ApiTeamMember[];
 };
 
 export async function createTeam(input: {
   name: string;
   theme?: string;
+  problem_statement_id?: string;
   leader_usn?: string;
   leader_github_url?: string;
   members?: ApiTeamMember[];
@@ -43,6 +72,7 @@ export async function createTeam(input: {
   const { data } = await api.post<ApiTeam>('/teams', {
     name: input.name,
     theme: input.theme || null,
+    problem_statement_id: input.problem_statement_id || null,
     leader_usn: input.leader_usn || '',
     leader_github_url: input.leader_github_url || '',
     members: input.members || [],
@@ -55,7 +85,6 @@ export async function getMyTeam(): Promise<ApiTeam | null> {
     const { data } = await api.get<ApiTeam>('/teams/mine');
     return data;
   } catch (err: any) {
-    // 404 means user has no team yet — not an error
     if (err?.response?.status === 404) return null;
     throw err;
   }
@@ -86,6 +115,23 @@ export async function adminUpdateTeam(
   input: { name?: string; theme?: string; problem_statement_id?: string; status?: string; members?: ApiTeamMember[] }
 ) {
   const { data } = await api.patch<ApiTeam>(`/teams/${teamId}`, input);
+  return data;
+}
+
+export async function softDeleteTeam(teamId: string, reason?: string) {
+  const { data } = await api.delete<{ success: boolean; message: string }>(`/teams/${teamId}`, {
+    data: { reason: reason || 'Admin soft delete' },
+  });
+  return data;
+}
+
+export async function listDeletedTeams() {
+  const { data } = await api.get<ApiDeletedTeam[]>('/teams/deleted');
+  return data;
+}
+
+export async function restoreDeletedTeam(id: string) {
+  const { data } = await api.post<{ success: boolean; message: string }>(`/teams/${id}/restore`);
   return data;
 }
 

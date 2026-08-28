@@ -8,6 +8,7 @@ import { contentRouter } from '../../src/backend/content';
 import { promotionsRouter } from '../../src/backend/promotions';
 import { statsRouter } from '../../src/backend/stats';
 import { adminUsersRouter } from '../../src/backend/adminUsers';
+import { auditCenterRouter } from '../../src/backend/auditCenter';
 import { securityHeadersMiddleware } from '../../src/backend/middleware/securityHeaders';
 import { rateLimit } from '../../src/backend/middleware/rateLimit';
 
@@ -50,6 +51,7 @@ app.route('/teams', teamsRouter);
 app.route('/content', contentRouter);
 app.route('/promotions', promotionsRouter);
 app.route('/stats', statsRouter);
+app.route('/admin/audit-logs', auditCenterRouter);
 app.route('/admin', adminUsersRouter);
 
 export const onRequest = handle(app);

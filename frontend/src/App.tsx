@@ -35,10 +35,13 @@ import { DashboardAnnouncements } from '@/pages/dashboard/DashboardAnnouncements
 
 import { AdminHome } from '@/pages/admin/AdminHome';
 import { Registrations } from '@/pages/admin/Registrations';
+import { UserDirectory } from '@/pages/admin/UserDirectory';
 import { ScreeningConsole } from '@/pages/admin/ScreeningConsole';
 import { PromotionComposer } from '@/pages/admin/PromotionComposer';
 import { PromoPostDetails } from '@/pages/admin/PromoPostDetails';
 import { UpdatesComposer } from '@/pages/admin/UpdatesComposer';
+import { AuditLogsPage } from '@/pages/admin/AuditLogs';
+import { DeletedTeams } from '@/pages/admin/DeletedTeams';
 
 import { ScrollToTop } from '@/components/ScrollToTop';
 
@@ -63,7 +66,10 @@ const DASHBOARD_NAV = [
 const ADMIN_NAV = [
   { to: '/admin', label: 'Overview' },
   { to: '/admin/registrations', label: 'Registrations' },
+  { to: '/admin/users', label: 'User directory' },
+  { to: '/admin/deleted-teams', label: 'Deleted teams' },
   { to: '/admin/screening', label: 'Screening console' },
+  { to: '/admin/audit-logs', label: 'Security audit center' },
   { to: '/admin/promotions', label: 'Promotion composer' },
   { to: '/admin/updates', label: 'Updates composer' },
 ];
@@ -112,7 +118,10 @@ function App() {
               <Route element={<AppShell title="Admin" navItems={ADMIN_NAV} />}>
                 <Route index element={<AdminHome />} />
                 <Route path="registrations" element={<Registrations />} />
+                <Route path="users" element={<UserDirectory />} />
+                <Route path="deleted-teams" element={<DeletedTeams />} />
                 <Route path="screening" element={<ScreeningConsole />} />
+                <Route path="audit-logs" element={<AuditLogsPage />} />
                 <Route path="promotions" element={<PromotionComposer />} />
                 <Route path="promotions/:postId" element={<PromoPostDetails />} />
                 <Route path="updates" element={<UpdatesComposer />} />

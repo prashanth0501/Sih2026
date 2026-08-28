@@ -13,7 +13,12 @@ export type Variables = {
     sub?: string;
     id?: string;
     email: string;
+    name?: string;
     role: string;
+    department?: string;
+    year?: number | string;
+    usn?: string;
+    sid?: string;
   };
 };
 
