@@ -36,9 +36,11 @@ export function TeamMembers() {
       <div className="max-w-xl">
         <h1 className="font-display text-[1.6rem] font-bold">Team members</h1>
         <p className="mt-3 text-ink-soft">
-          You're not on a team yet. If you're meant to be a member, ask your team leader to add you — they'll
-          need your name, USN, college email, department, and year. Otherwise, register a team of your own from
-          the <a href="/register" className="text-marigold hover:underline">Register</a> page.
+          You are not registered in a team yet. If you are a team leader, you can set up your team directly on your{' '}
+          <a href="/dashboard" className="text-marigold font-bold hover:underline">
+            Dashboard
+          </a>
+          . If you are a team member, please ask your team leader to add your USN and email to their team roster.
         </p>
       </div>
     );

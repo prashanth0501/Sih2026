@@ -184,6 +184,49 @@ authRouter.post('/register', async (c) => {
   const id = crypto.randomUUID();
   const password_hash = await hashPassword(body.password);
   const emailClean = String(body.email).toLowerCase().trim();
+  const usnClean = body.usn ? String(body.usn).trim().toUpperCase() : null;
+
+  // Check if user already exists in DB
+  const existingUser = await c.env.DB.prepare('SELECT * FROM users WHERE LOWER(TRIM(email)) = LOWER(?)')
+    .bind(emailClean)
+    .first();
+
+  if (existingUser) {
+    const validPassword = await verifyPassword(body.password, existingUser.password_hash as string);
+    if (validPassword) {
+      if (usnClean) {
+        await c.env.DB.prepare('UPDATE users SET usn = ? WHERE id = ?')
+          .bind(usnClean, existingUser.id)
+          .run();
+      }
+
+      const nowSeconds = Math.floor(Date.now() / 1000);
+      const secret = c.env.JWT_SECRET || 'dev-only-secret-change-me';
+      const token = await sign(
+        {
+          sub: existingUser.id,
+          email: existingUser.email,
+          role: existingUser.role || 'participant',
+          iss: 'ignite-sih',
+          aud: 'ignite-portal',
+          iat: nowSeconds,
+          exp: nowSeconds + 24 * 3600,
+        },
+        secret,
+        'HS256'
+      );
+
+      const userProfile = await c.env.DB.prepare(
+        'SELECT id, name, email, role, department, year, usn, gender, github_url, email_verified FROM users WHERE id = ?'
+      )
+        .bind(existingUser.id)
+        .first();
+
+      return c.json({ access_token: token, token_type: 'bearer', user: userProfile, email_verification_required: false });
+    } else {
+      return c.json({ detail: 'This email is already registered. Please enter your correct password or log in.' }, 400);
+    }
+  }
 
   // Generate Email Verification Token
   const verification_token = generateSecureToken();
@@ -202,7 +245,7 @@ authRouter.post('/register', async (c) => {
         'participant',
         body.department || 'CSE',
         body.year || 1,
-        body.usn ? String(body.usn).toUpperCase() : null,
+        usnClean,
         body.gender || 'Not Specified',
         body.github_url || null,
         0, // email_verified
