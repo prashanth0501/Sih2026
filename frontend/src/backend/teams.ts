@@ -17,17 +17,10 @@ async function verifyTeamOwnership(c: any, teamId: string) {
     return { allowed: true, team, isStaff: true };
   }
 
-  // Fetch logged-in user's USN
-  const dbUser = await c.env.DB.prepare('SELECT usn FROM users WHERE email = ?')
+  // Fetch logged-in user's account details
+  const dbUser = await c.env.DB.prepare('SELECT usn, email FROM users WHERE LOWER(email) = LOWER(?)')
     .bind(user.email)
     .first();
-
-  if (!dbUser || !dbUser.usn) {
-    return {
-      allowed: false,
-      response: c.json({ detail: 'Forbidden — USN not found on user account' }, 403),
-    };
-  }
 
   const team = await c.env.DB.prepare('SELECT * FROM teams WHERE id = ?').bind(teamId).first();
   if (!team) {
@@ -37,14 +30,34 @@ async function verifyTeamOwnership(c: any, teamId: string) {
     };
   }
 
-  if (team.leader_usn !== dbUser.usn && String(team.leader_usn).trim() !== String(dbUser.usn).trim()) {
+  const normLeaderUsn = String(team.leader_usn || '').trim().toUpperCase();
+  const normUserUsn = String(dbUser?.usn || '').trim().toUpperCase();
+  const normUserEmail = String(user.email || '').trim().toLowerCase();
+
+  let isLeader = Boolean(normLeaderUsn && normUserUsn && normLeaderUsn === normUserUsn);
+
+  if (!isLeader) {
+    // Fallback: check if logged-in user is listed in team_members as leader or matching email/USN
+    const member = await c.env.DB.prepare(
+      `SELECT role FROM team_members
+       WHERE team_id = ? AND (LOWER(TRIM(email)) = ? OR UPPER(TRIM(usn)) = ?)`
+    )
+      .bind(teamId, normUserEmail, normUserUsn || 'NO_USN')
+      .first();
+
+    if (member && (member.role === 'leader' || normLeaderUsn === normUserUsn)) {
+      isLeader = true;
+    }
+  }
+
+  if (!isLeader) {
     return {
       allowed: false,
-      response: c.json({ detail: 'Forbidden — Only the team leader can modify team settings' }, 403),
+      response: c.json({ detail: 'Forbidden — Only the team leader can perform this action' }, 403),
     };
   }
 
-  return { allowed: true, team, dbUser, isStaff: false };
+  return { allowed: true, team, isStaff: false };
 }
 
 // ─── POST /teams — Create a new team ──────────────────────────────────────────
@@ -60,28 +73,39 @@ teamsRouter.post('/', async (c) => {
 
   // Fetch leader from DB
   const dbUser = await c.env.DB.prepare(
-    'SELECT usn, name, email, department, year, gender, github_url FROM users WHERE email = ?'
+    'SELECT usn, name, email, department, year, gender, github_url FROM users WHERE LOWER(email) = LOWER(?)'
   )
     .bind(user.email)
     .first();
-  if (!dbUser) return c.json({ detail: 'User not found' }, 404);
+  if (!dbUser) return c.json({ detail: 'User account not found' }, 404);
 
-  const leader_usn = body.leader_usn || dbUser.usn;
-  if (!leader_usn) return c.json({ detail: 'Leader USN is required — make sure your USN was set during registration' }, 400);
+  const leader_usn = String(body.leader_usn || dbUser.usn || '').trim().toUpperCase();
+  if (!leader_usn) {
+    return c.json({ detail: 'Leader USN is required — please enter your college USN' }, 400);
+  }
+
+  // Make sure leader's USN is saved in users table if missing or different
+  if (!dbUser.usn || String(dbUser.usn).trim().toUpperCase() !== leader_usn) {
+    await c.env.DB.prepare('UPDATE users SET usn = ? WHERE LOWER(email) = LOWER(?)')
+      .bind(leader_usn, user.email)
+      .run();
+  }
 
   // Ensure leader is not already in another team
   const existing = await c.env.DB.prepare(
-    'SELECT team_id FROM team_members WHERE usn = ? OR TRIM(usn) = ?'
+    'SELECT team_id FROM team_members WHERE UPPER(TRIM(usn)) = ? OR LOWER(TRIM(email)) = LOWER(?)'
   )
-    .bind(leader_usn, String(leader_usn).trim())
+    .bind(leader_usn, user.email)
     .first();
-  if (existing) return c.json({ detail: 'You are already registered in a team' }, 400);
+  if (existing) {
+    return c.json({ detail: 'You are already registered as a member or leader in a team' }, 400);
+  }
 
   const additionalMembers: any[] = Array.isArray(body.members) ? body.members : [];
 
   // Check for duplicate USNs in the submitted member list
-  const allUsns = [leader_usn, ...additionalMembers.map((m: any) => m.usn)].filter(Boolean);
-  const uniqueUsns = new Set(allUsns.map(u => String(u).trim().toUpperCase()));
+  const allUsns = [leader_usn, ...additionalMembers.map((m: any) => String(m.usn || '').trim().toUpperCase())].filter(Boolean);
+  const uniqueUsns = new Set(allUsns);
   if (uniqueUsns.size !== allUsns.length) {
     return c.json({ detail: 'Duplicate USNs found in the team member list' }, 400);
   }
@@ -118,8 +142,8 @@ teamsRouter.post('/', async (c) => {
         dbUser.email,
         leader_usn,
         dbUser.gender || 'Not Specified',
-        dbUser.department,
-        dbUser.year,
+        dbUser.department || 'CSE',
+        dbUser.year || 3,
         'leader',
         dbUser.github_url || '',
         new Date().toISOString()
@@ -129,6 +153,8 @@ teamsRouter.post('/', async (c) => {
     // 3. Insert additional members
     for (const member of additionalMembers) {
       if (!member.usn || !member.name) continue;
+      const cleanMUsn = String(member.usn).trim().toUpperCase();
+      const cleanMEmail = String(member.email || '').trim().toLowerCase();
       try {
         await c.env.DB.prepare(
           `INSERT INTO team_members (id, team_id, name, email, usn, gender, department, year, role, github_url, created_at)
@@ -137,19 +163,19 @@ teamsRouter.post('/', async (c) => {
           .bind(
             crypto.randomUUID(),
             id,
-            member.name,
-            member.email || '',
-            String(member.usn).toUpperCase(),
+            String(member.name).trim(),
+            cleanMEmail,
+            cleanMUsn,
             member.gender || 'Not Specified',
             member.department || 'CSE',
-            member.year || 1,
+            member.year || 3,
             'member',
             member.github_url || '',
             new Date().toISOString()
           )
           .run();
       } catch {
-        // USN already in another team — skip silently
+        // Skip if member USN collision occurs
       }
     }
 
@@ -163,9 +189,9 @@ teamsRouter.post('/', async (c) => {
     return c.json({ id, status: 'registered' });
   } catch (err: any) {
     if (err?.message?.includes('UNIQUE') || err?.message?.includes('unique')) {
-      return c.json({ detail: 'A team with this name already exists' }, 400);
+      return c.json({ detail: 'A team with this name or leader USN already exists' }, 400);
     }
-    return c.json({ detail: 'Failed to create team — please try again' }, 400);
+    return c.json({ detail: 'Failed to create team — please check your team details' }, 400);
   }
 });
 
@@ -174,17 +200,20 @@ teamsRouter.post('/', async (c) => {
 teamsRouter.get('/mine', async (c) => {
   const user = c.get('user');
 
-  const dbUser = await c.env.DB.prepare('SELECT usn FROM users WHERE email = ?')
+  const dbUser = await c.env.DB.prepare('SELECT usn, email FROM users WHERE LOWER(email) = LOWER(?)')
     .bind(user.email)
     .first();
 
-  if (!dbUser || !dbUser.usn) return c.json({ detail: 'No team found — USN not set on account' }, 404);
+  const normUserUsn = String(dbUser?.usn || '').trim().toUpperCase();
+  const normUserEmail = String(user.email || '').trim().toLowerCase();
 
   const member = await c.env.DB.prepare(
-    'SELECT team_id FROM team_members WHERE usn = ? OR TRIM(usn) = TRIM(?)'
+    `SELECT team_id, role FROM team_members
+     WHERE (UPPER(TRIM(usn)) = ? AND ? != '') OR (LOWER(TRIM(email)) = ? AND ? != '')`
   )
-    .bind(dbUser.usn, dbUser.usn)
+    .bind(normUserUsn, normUserUsn, normUserEmail, normUserEmail)
     .first();
+
   if (!member) return c.json({ detail: 'You are not in any team yet' }, 404);
 
   const team = await c.env.DB.prepare('SELECT * FROM teams WHERE id = ?')
@@ -198,6 +227,9 @@ teamsRouter.get('/mine', async (c) => {
     .bind(team.id)
     .all();
 
+  const normLeaderUsn = String(team.leader_usn || '').trim().toUpperCase();
+  const viewerIsLeader = (normLeaderUsn && normUserUsn && normLeaderUsn === normUserUsn) || member.role === 'leader';
+
   return c.json({
     id: team.id,
     name: team.name,
@@ -208,7 +240,7 @@ teamsRouter.get('/mine', async (c) => {
     members: members,
     status: team.status,
     is_locked: Boolean(team.is_locked),
-    viewer_is_leader: team.leader_usn === dbUser.usn || String(team.leader_usn).trim() === String(dbUser.usn).trim(),
+    viewer_is_leader: viewerIsLeader,
     level1: {
       status: team.level1_status,
       score: team.level1_score,
@@ -239,6 +271,21 @@ teamsRouter.post('/:id/members', async (c) => {
     return c.json({ detail: 'Member name and USN are required' }, 400);
   }
 
+  const cleanUsn = String(body.usn).trim().toUpperCase();
+  const cleanEmail = String(body.email || '').trim().toLowerCase();
+
+  // Check if USN is already registered in ANY team
+  const existingMember = await c.env.DB.prepare(
+    'SELECT team_id FROM team_members WHERE UPPER(TRIM(usn)) = ?'
+  ).bind(cleanUsn).first();
+
+  if (existingMember) {
+    if (existingMember.team_id === teamId) {
+      return c.json({ detail: `Member with USN ${cleanUsn} is already in your team` }, 400);
+    }
+    return c.json({ detail: `USN ${cleanUsn} is already registered in another team` }, 400);
+  }
+
   // Check member count (max 6 total including leader)
   const { results: currentMembers } = await c.env.DB.prepare(
     'SELECT id FROM team_members WHERE team_id = ?'
@@ -258,12 +305,12 @@ teamsRouter.post('/:id/members', async (c) => {
       .bind(
         id,
         teamId,
-        body.name,
-        body.email || '',
-        String(body.usn).toUpperCase(),
+        String(body.name).trim(),
+        cleanEmail,
+        cleanUsn,
         body.gender || 'Not Specified',
         body.department || 'CSE',
-        body.year || 1,
+        body.year || 3,
         body.role || 'member',
         body.github_url || '',
         new Date().toISOString()
@@ -274,13 +321,13 @@ teamsRouter.post('/:id/members', async (c) => {
       team_id: teamId,
       team_name: team.name,
       added_member_name: body.name,
-      added_member_usn: body.usn,
+      added_member_usn: cleanUsn,
     });
 
     return c.json({ success: true });
   } catch (err: any) {
     if (err?.message?.includes('UNIQUE') || err?.message?.includes('unique')) {
-      return c.json({ detail: 'This USN is already registered in another team' }, 400);
+      return c.json({ detail: `USN ${cleanUsn} is already registered in a team` }, 400);
     }
     return c.json({ detail: 'Failed to add member' }, 400);
   }
