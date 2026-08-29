@@ -117,25 +117,57 @@ teamsRouter.post('/', async (c) => {
     return c.json({ detail: 'Duplicate USNs found in the team member list' }, 400);
   }
 
+  // Self-healing schema migration: ensure problem_statement_id column exists on teams table in D1
   try {
-    // 1. Insert team
-    await c.env.DB.prepare(
-      `INSERT INTO teams (id, name, leader_usn, leader_github_url, theme, members_json, status, problem_statement_id, created_at, updated_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
-    )
-      .bind(
-        id,
-        cleanTeamName,
-        leader_usn,
-        body.leader_github_url || dbUser.github_url || '',
-        body.theme || null,
-        '[]',
-        'registered',
-        body.problem_statement_id || null,
-        new Date().toISOString(),
-        new Date().toISOString()
+    await c.env.DB.prepare('ALTER TABLE teams ADD COLUMN problem_statement_id TEXT;').run();
+  } catch {
+    // Column already exists, ignore safely
+  }
+
+  try {
+    // 1. Insert team with self-healing fallback
+    try {
+      await c.env.DB.prepare(
+        `INSERT INTO teams (id, name, leader_usn, leader_github_url, theme, members_json, status, problem_statement_id, created_at, updated_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
       )
-      .run();
+        .bind(
+          id,
+          cleanTeamName,
+          leader_usn,
+          body.leader_github_url || dbUser.github_url || '',
+          body.theme || null,
+          '[]',
+          'registered',
+          body.problem_statement_id || null,
+          new Date().toISOString(),
+          new Date().toISOString()
+        )
+        .run();
+    } catch (insertErr: any) {
+      const msg = String(insertErr?.message || insertErr || '');
+      if (msg.includes('problem_statement_id')) {
+        // Fallback insert without problem_statement_id if D1 column migration is pending
+        await c.env.DB.prepare(
+          `INSERT INTO teams (id, name, leader_usn, leader_github_url, theme, members_json, status, created_at, updated_at)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`
+        )
+          .bind(
+            id,
+            cleanTeamName,
+            leader_usn,
+            body.leader_github_url || dbUser.github_url || '',
+            body.theme || null,
+            '[]',
+            'registered',
+            new Date().toISOString(),
+            new Date().toISOString()
+          )
+          .run();
+      } else {
+        throw insertErr;
+      }
+    }
 
     // 2. Insert leader into team_members
     await c.env.DB.prepare(
