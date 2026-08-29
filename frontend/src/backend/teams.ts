@@ -67,8 +67,15 @@ teamsRouter.post('/', async (c) => {
   const user = c.get('user');
   const id = crypto.randomUUID();
 
-  if (!body.name || !String(body.name).trim()) {
-    return c.json({ detail: 'Team name is required' }, 400);
+  const cleanTeamName = String(body.name).trim();
+
+  // Check if a team with this name already exists (case-insensitive)
+  const existingName = await c.env.DB.prepare(
+    'SELECT id FROM teams WHERE LOWER(TRIM(name)) = LOWER(?)'
+  ).bind(cleanTeamName).first();
+
+  if (existingName) {
+    return c.json({ detail: `A team named "${cleanTeamName}" already exists. Please choose a different team name.` }, 400);
   }
 
   // Fetch leader from DB
@@ -98,7 +105,7 @@ teamsRouter.post('/', async (c) => {
     .bind(leader_usn, user.email)
     .first();
   if (existing) {
-    return c.json({ detail: 'You are already registered as a member or leader in a team' }, 400);
+    return c.json({ detail: `USN ${leader_usn} or account email is already registered in a team` }, 400);
   }
 
   const additionalMembers: any[] = Array.isArray(body.members) ? body.members : [];
@@ -118,7 +125,7 @@ teamsRouter.post('/', async (c) => {
     )
       .bind(
         id,
-        String(body.name).trim(),
+        cleanTeamName,
         leader_usn,
         body.leader_github_url || dbUser.github_url || '',
         body.theme || null,
@@ -181,17 +188,18 @@ teamsRouter.post('/', async (c) => {
 
     await logAudit(c, 'TEAM_CREATED', id, {
       team_id: id,
-      team_name: String(body.name).trim(),
+      team_name: cleanTeamName,
       leader_usn,
       member_count: additionalMembers.length + 1,
     });
 
     return c.json({ id, status: 'registered' });
   } catch (err: any) {
-    if (err?.message?.includes('UNIQUE') || err?.message?.includes('unique')) {
-      return c.json({ detail: 'A team with this name or leader USN already exists' }, 400);
+    const errMsg = String(err?.message || err || '');
+    if (errMsg.toLowerCase().includes('unique') || errMsg.toLowerCase().includes('constraint')) {
+      return c.json({ detail: `A team named "${cleanTeamName}" or leader USN is already registered` }, 400);
     }
-    return c.json({ detail: 'Failed to create team — please check your team details' }, 400);
+    return c.json({ detail: `Failed to create team: ${errMsg || 'Database error'}` }, 400);
   }
 });
 

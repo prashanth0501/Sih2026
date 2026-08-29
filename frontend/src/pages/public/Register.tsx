@@ -13,7 +13,7 @@ const DEPARTMENTS = ['CSE', 'ISE', 'AI & ML', 'ECE', 'EEE', 'Mechanical', 'Civil
 const STEPS = ['Step 1: Leader & Account Details', 'Step 2: Team Roster & Challenge Theme'];
 
 export function Register() {
-  const { signup } = useAuth();
+  const { signup, login } = useAuth();
   const navigate = useNavigate();
   const [step, setStep] = useState(0);
   const [error, setError] = useState('');
@@ -101,7 +101,7 @@ export function Register() {
 
     setLoading(true);
 
-    // Step 1 — Create leader account
+    // Step 1 — Create leader account (or auto-login if account already exists)
     try {
       await signup({
         name: form.name,
@@ -111,18 +111,27 @@ export function Register() {
         department: form.department,
         year: form.year,
         gender: form.gender,
-        github_url: form.leaderGithub, // BUG 3 FIX — was missing before
+        github_url: form.leaderGithub,
       });
     } catch (err: any) {
-      const msg =
-        err.response?.data?.detail ||
-        "Couldn't create your account — email may already be registered.";
-      setError(msg);
-      setLoading(false);
-      return;
+      const msg = err.response?.data?.detail || '';
+      // If email is already registered, attempt login with entered password
+      if (msg.toLowerCase().includes('already registered')) {
+        try {
+          await login(form.email, form.password);
+        } catch {
+          setError('This email is already registered. Please log in to complete team registration.');
+          setLoading(false);
+          return;
+        }
+      } else {
+        setError(msg || "Couldn't create your account — email may already be registered.");
+        setLoading(false);
+        return;
+      }
     }
 
-    // Step 2 — Create team (account now exists, JWT set)
+    // Step 2 — Create team (account exists, JWT set)
     try {
       await createTeam({
         name: form.teamName,
@@ -132,11 +141,10 @@ export function Register() {
         members,
       });
     } catch (err: any) {
-      // BUG 8 FIX — account was created but team failed; tell user clearly
       const msg =
         err.response?.data?.detail ||
-        'Your account was created but the team could not be set up. Please log in and try creating your team from the dashboard.';
-      setError(`Account created ✓ — but team setup failed: ${msg}`);
+        'Team setup failed — please check your team details and try again.';
+      setError(msg);
       setLoading(false);
       return;
     }
