@@ -23,6 +23,15 @@ type StatFilterCategory =
   | 'dept_bca'
   | 'dept_ise'
   | 'dept_mech'
+  | 'dedicated_cse'
+  | 'dedicated_ds'
+  | 'dedicated_aiml'
+  | 'dedicated_civil'
+  | 'dedicated_ece'
+  | 'dedicated_bca'
+  | 'dedicated_ise'
+  | 'dedicated_mech'
+  | 'mixed_dept'
   | 'year_1'
   | 'year_2'
   | 'year_3'
@@ -99,7 +108,7 @@ export function AdminHome() {
     (t) => t.status === 'registered' || t.status === 'l1_submitted' || t.status === 'l1_under_review' || t.status === 'l1_rejected' || t.status === 'l2_rejected'
   );
 
-  // Helper matching functions (Mix team awareness)
+  // Helper matching functions
   const isDeptMatch = (m: ApiTeamMember, target: string) => {
     const d = String(m.department || '').toLowerCase().trim();
     const t = target.toLowerCase();
@@ -114,7 +123,32 @@ export function AdminHome() {
     return d === t;
   };
 
-  // Stats Calculations
+  const getDeptCategory = (m: ApiTeamMember) => {
+    if (isDeptMatch(m, 'cse')) return 'cse';
+    if (isDeptMatch(m, 'ece')) return 'ece';
+    if (isDeptMatch(m, 'aiml')) return 'aiml';
+    if (isDeptMatch(m, 'ds')) return 'ds';
+    if (isDeptMatch(m, 'civil')) return 'civil';
+    if (isDeptMatch(m, 'bca')) return 'bca';
+    if (isDeptMatch(m, 'ise')) return 'ise';
+    if (isDeptMatch(m, 'mech')) return 'mech';
+    return String(m.department || 'other').toLowerCase();
+  };
+
+  const isDedicatedDept = (t: ApiTeam, deptCode: string) => {
+    const members = t.members || [];
+    if (members.length === 0) return false;
+    return members.every((m) => isDeptMatch(m, deptCode));
+  };
+
+  const isMixedDept = (t: ApiTeam) => {
+    const members = t.members || [];
+    if (members.length <= 1) return false;
+    const set = new Set(members.map((m) => getDeptCategory(m)));
+    return set.size > 1;
+  };
+
+  // Roster Headcount Stats
   const count6Done = useMemo(() => teams.filter((t) => (t.members?.length || 0) === 6).length, [teams]);
   const count5Members = useMemo(() => teams.filter((t) => (t.members?.length || 0) === 5).length, [teams]);
   const count4Members = useMemo(() => teams.filter((t) => (t.members?.length || 0) === 4).length, [teams]);
@@ -126,7 +160,7 @@ export function AdminHome() {
     [teams]
   );
 
-  // Department Stat Teams
+  // Overall Department Teams (Any member in Dept)
   const countDeptCSE = useMemo(() => teams.filter((t) => t.members?.some((m) => isDeptMatch(m, 'cse'))).length, [teams]);
   const countDeptDS = useMemo(() => teams.filter((t) => t.members?.some((m) => isDeptMatch(m, 'ds'))).length, [teams]);
   const countDeptAIML = useMemo(() => teams.filter((t) => t.members?.some((m) => isDeptMatch(m, 'aiml'))).length, [teams]);
@@ -135,6 +169,17 @@ export function AdminHome() {
   const countDeptBCA = useMemo(() => teams.filter((t) => t.members?.some((m) => isDeptMatch(m, 'bca'))).length, [teams]);
   const countDeptISE = useMemo(() => teams.filter((t) => t.members?.some((m) => isDeptMatch(m, 'ise'))).length, [teams]);
   const countDeptMech = useMemo(() => teams.filter((t) => t.members?.some((m) => isDeptMatch(m, 'mech'))).length, [teams]);
+
+  // Dedicated Department Teams (100% Single-Dept Rosters)
+  const countDedicatedCSE = useMemo(() => teams.filter((t) => isDedicatedDept(t, 'cse')).length, [teams]);
+  const countDedicatedDS = useMemo(() => teams.filter((t) => isDedicatedDept(t, 'ds')).length, [teams]);
+  const countDedicatedAIML = useMemo(() => teams.filter((t) => isDedicatedDept(t, 'aiml')).length, [teams]);
+  const countDedicatedCivil = useMemo(() => teams.filter((t) => isDedicatedDept(t, 'civil')).length, [teams]);
+  const countDedicatedECE = useMemo(() => teams.filter((t) => isDedicatedDept(t, 'ece')).length, [teams]);
+  const countDedicatedBCA = useMemo(() => teams.filter((t) => isDedicatedDept(t, 'bca')).length, [teams]);
+  const countDedicatedISE = useMemo(() => teams.filter((t) => isDedicatedDept(t, 'ise')).length, [teams]);
+  const countDedicatedMech = useMemo(() => teams.filter((t) => isDedicatedDept(t, 'mech')).length, [teams]);
+  const countMixedDept = useMemo(() => teams.filter((t) => isMixedDept(t)).length, [teams]);
 
   // Academic Year Stat Teams
   const countYear1 = useMemo(() => teams.filter((t) => t.members?.some((m) => Number(m.year) === 1)).length, [teams]);
@@ -167,7 +212,7 @@ export function AdminHome() {
     if (activeFilter === 'roster_2') return teams.filter((t) => (t.members?.length || 0) === 2);
     if (activeFilter === 'roster_1') return teams.filter((t) => (t.members?.length || 0) === 1);
     if (activeFilter === 'no_female') return teams.filter((t) => !t.members?.some((m) => String(m.gender || '').toLowerCase() === 'female'));
-    
+
     if (activeFilter === 'dept_cse') return teams.filter((t) => t.members?.some((m) => isDeptMatch(m, 'cse')));
     if (activeFilter === 'dept_ds') return teams.filter((t) => t.members?.some((m) => isDeptMatch(m, 'ds')));
     if (activeFilter === 'dept_aiml') return teams.filter((t) => t.members?.some((m) => isDeptMatch(m, 'aiml')));
@@ -176,6 +221,16 @@ export function AdminHome() {
     if (activeFilter === 'dept_bca') return teams.filter((t) => t.members?.some((m) => isDeptMatch(m, 'bca')));
     if (activeFilter === 'dept_ise') return teams.filter((t) => t.members?.some((m) => isDeptMatch(m, 'ise')));
     if (activeFilter === 'dept_mech') return teams.filter((t) => t.members?.some((m) => isDeptMatch(m, 'mech')));
+
+    if (activeFilter === 'dedicated_cse') return teams.filter((t) => isDedicatedDept(t, 'cse'));
+    if (activeFilter === 'dedicated_ds') return teams.filter((t) => isDedicatedDept(t, 'ds'));
+    if (activeFilter === 'dedicated_aiml') return teams.filter((t) => isDedicatedDept(t, 'aiml'));
+    if (activeFilter === 'dedicated_civil') return teams.filter((t) => isDedicatedDept(t, 'civil'));
+    if (activeFilter === 'dedicated_ece') return teams.filter((t) => isDedicatedDept(t, 'ece'));
+    if (activeFilter === 'dedicated_bca') return teams.filter((t) => isDedicatedDept(t, 'bca'));
+    if (activeFilter === 'dedicated_ise') return teams.filter((t) => isDedicatedDept(t, 'ise'));
+    if (activeFilter === 'dedicated_mech') return teams.filter((t) => isDedicatedDept(t, 'mech'));
+    if (activeFilter === 'mixed_dept') return teams.filter((t) => isMixedDept(t));
 
     if (activeFilter === 'year_1') return teams.filter((t) => t.members?.some((m) => Number(m.year) === 1));
     if (activeFilter === 'year_2') return teams.filter((t) => t.members?.some((m) => Number(m.year) === 2));
@@ -241,6 +296,15 @@ export function AdminHome() {
     dept_bca: 'Teams with BCA Members',
     dept_ise: 'Teams with ISE Members',
     dept_mech: 'Teams with Mechanical Members',
+    dedicated_cse: 'Dedicated CSE Teams (100% CSE Roster)',
+    dedicated_ds: 'Dedicated Data Science Teams (100% DS Roster)',
+    dedicated_aiml: 'Dedicated AIML Teams (100% AIML Roster)',
+    dedicated_civil: 'Dedicated Civil Teams (100% Civil Roster)',
+    dedicated_ece: 'Dedicated ECE Teams (100% ECE Roster)',
+    dedicated_bca: 'Dedicated BCA Teams (100% BCA Roster)',
+    dedicated_ise: 'Dedicated ISE Teams (100% ISE Roster)',
+    dedicated_mech: 'Dedicated Mechanical Teams (100% Mech Roster)',
+    mixed_dept: 'Mixed Department Teams (2+ Departments)',
     year_1: 'Teams with 1st Year Students',
     year_2: 'Teams with 2nd Year Students',
     year_3: 'Teams with 3rd Year Students',
@@ -277,7 +341,7 @@ export function AdminHome() {
         <div>
           <h1 className="font-display text-[1.6rem] font-bold">Super Admin Dashboard</h1>
           <p className="mt-1 text-[0.85rem] text-ink-soft">
-            Real-time analytics across Departments, Year-by-Year (1st, 2nd, 3rd, 4th Year), Demographics, &amp; Rosters
+            Real-time analytics across Dedicated Depts (100% Pure), Dept-Year Matrices, Demographics, &amp; Rosters
           </p>
         </div>
 
@@ -326,10 +390,54 @@ export function AdminHome() {
         </div>
       </div>
 
-      {/* NEW SECTION: DEPARTMENT + YEAR DETAILED MATRIX BREAKDOWN (1st Year ECE, 2nd Year ECE, 3rd Year ECE, etc.) */}
+      {/* NEW SECTION: DEDICATED DEPARTMENT TEAMS (100% Single-Dept Rosters) */}
       <div className="border border-line bg-paper p-6 rounded-2xl shadow-xs space-y-4">
         <div>
-          <h2 className="font-display text-[1.15rem] font-bold text-ink">Department &amp; Academic Year Breakdown (1st, 2nd, 3rd, 4th Year)</h2>
+          <h2 className="font-display text-[1.15rem] font-bold text-ink">Dedicated Department Teams (100% Single-Dept Rosters)</h2>
+          <p className="text-[0.8rem] text-ink-soft mt-0.5">
+            Teams where ALL members belong to the exact same department (Dedicated CSE, Dedicated ECE, Dedicated AIML, etc.)
+          </p>
+        </div>
+
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          {[
+            { key: 'dedicated_cse' as const, label: '🎯 Dedicated CSE', full: '100% CSE Members', count: countDedicatedCSE, color: 'border-blue-600/40 bg-blue-500/10 text-blue-800 dark:text-blue-300' },
+            { key: 'dedicated_ece' as const, label: '🎯 Dedicated ECE', full: '100% ECE Members', count: countDedicatedECE, color: 'border-emerald-600/40 bg-emerald-500/10 text-emerald-800 dark:text-emerald-300' },
+            { key: 'dedicated_aiml' as const, label: '🎯 Dedicated AIML', full: '100% AIML Members', count: countDedicatedAIML, color: 'border-purple-600/40 bg-purple-500/10 text-purple-800 dark:text-purple-300' },
+            { key: 'dedicated_ds' as const, label: '🎯 Dedicated Data Science', full: '100% DS Members', count: countDedicatedDS, color: 'border-cyan-600/40 bg-cyan-500/10 text-cyan-800 dark:text-cyan-300' },
+            { key: 'dedicated_civil' as const, label: '🎯 Dedicated Civil', full: '100% Civil Members', count: countDedicatedCivil, color: 'border-amber-600/40 bg-amber-500/10 text-amber-800 dark:text-amber-300' },
+            { key: 'dedicated_bca' as const, label: '🎯 Dedicated BCA', full: '100% BCA Members', count: countDedicatedBCA, color: 'border-rose-600/40 bg-rose-500/10 text-rose-800 dark:text-rose-300' },
+            { key: 'dedicated_ise' as const, label: '🎯 Dedicated ISE', full: '100% ISE Members', count: countDedicatedISE, color: 'border-indigo-600/40 bg-indigo-500/10 text-indigo-800 dark:text-indigo-300' },
+            { key: 'dedicated_mech' as const, label: '🎯 Dedicated Mechanical', full: '100% Mech Members', count: countDedicatedMech, color: 'border-orange-600/40 bg-orange-500/10 text-orange-800 dark:text-orange-300' },
+            { key: 'mixed_dept' as const, label: '🔀 Mixed Dept Teams', full: 'Members from 2+ Depts', count: countMixedDept, color: 'border-slate-600/40 bg-slate-500/10 text-slate-800 dark:text-slate-300' },
+          ].map((card) => {
+            const isSelected = activeFilter === card.key;
+            return (
+              <button
+                key={card.key}
+                type="button"
+                onClick={() => setActiveFilter(isSelected ? 'all' : card.key)}
+                className={`text-left p-4 rounded-xl border transition-all cursor-pointer bg-paper hover:shadow-md ${
+                  isSelected ? 'border-marigold ring-2 ring-marigold/30 bg-paper-2' : 'border-line hover:border-marigold/50'
+                }`}
+              >
+                <div className="flex items-center justify-between mb-1">
+                  <span className={`inline-block border px-2 py-0.5 text-[0.68rem] font-bold rounded uppercase ${card.color}`}>
+                    {card.label}
+                  </span>
+                </div>
+                <div className="font-display text-2xl font-bold tabular-nums text-ink">{card.count} Teams</div>
+                <div className="text-[0.72rem] text-ink-soft mt-1">{card.full}</div>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* DEPARTMENT + YEAR DETAILED MATRIX BREAKDOWN (1st Year ECE, 2nd Year ECE, 3rd Year ECE, etc.) */}
+      <div className="border border-line bg-paper p-6 rounded-2xl shadow-xs space-y-4">
+        <div>
+          <h2 className="font-display text-[1.15rem] font-bold text-ink">Department &amp; Academic Year Matrix (1st, 2nd, 3rd, 4th Year)</h2>
           <p className="text-[0.8rem] text-ink-soft mt-0.5">
             Click any Year card under a department (e.g. 1st Year ECE, 3rd Year CSE, 2nd Year AIML) to filter teams and list student names.
           </p>
@@ -405,10 +513,10 @@ export function AdminHome() {
         })()}
       </div>
 
-      {/* SECTION 1: OVERALL DEPARTMENT DISTRIBUTION */}
+      {/* OVERALL DEPARTMENT TOTALS */}
       <div className="border border-line bg-paper p-6 rounded-2xl shadow-xs space-y-4">
         <div>
-          <h2 className="font-display text-[1.15rem] font-bold text-ink">Department Totals Overview</h2>
+          <h2 className="font-display text-[1.15rem] font-bold text-ink">Overall Department Distribution (Mixed + Dedicated)</h2>
           <p className="text-[0.8rem] text-ink-soft mt-0.5">Click any department card to view all teams with members in that department</p>
         </div>
 
@@ -446,7 +554,7 @@ export function AdminHome() {
         </div>
       </div>
 
-      {/* SECTION 2: ACADEMIC YEAR & GENDER DEMOGRAPHICS STATS */}
+      {/* ACADEMIC YEAR & GENDER DEMOGRAPHICS STATS */}
       <div className="grid gap-6 lg:grid-cols-2">
         {/* Academic Year Stats */}
         <div className="border border-line bg-paper p-6 rounded-2xl shadow-xs space-y-4">
@@ -533,7 +641,7 @@ export function AdminHome() {
         </div>
       </div>
 
-      {/* SECTION 3: ROSTER COMPLETENESS STATS */}
+      {/* ROSTER COMPLETENESS STATS */}
       <div className="border border-line bg-paper p-6 rounded-2xl shadow-xs space-y-4">
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div>
