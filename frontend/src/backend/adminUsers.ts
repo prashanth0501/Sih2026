@@ -144,3 +144,50 @@ adminUsersRouter.get('/audit-logs', async (c) => {
     }))
   );
 });
+
+// ─── GET /admin/backup-database — Export Full D1 Database JSON Backup ────────
+
+adminUsersRouter.get('/backup-database', async (c) => {
+  try {
+    const { results: users } = await c.env.DB.prepare('SELECT id, name, email, role, department, year, usn, gender, github_url, created_at FROM users').all();
+    const { results: teams } = await c.env.DB.prepare('SELECT * FROM teams').all();
+    const { results: team_members } = await c.env.DB.prepare('SELECT * FROM team_members').all();
+    const { results: audit_logs } = await c.env.DB.prepare('SELECT * FROM audit_logs LIMIT 1000').all();
+
+    let deleted_teams: any[] = [];
+    try {
+      const res = await c.env.DB.prepare('SELECT * FROM deleted_teams').all();
+      deleted_teams = res.results;
+    } catch {
+      // Optional table
+    }
+
+    const backup = {
+      backup_timestamp: new Date().toISOString(),
+      counts: {
+        users: users.length,
+        teams: teams.length,
+        team_members: team_members.length,
+        audit_logs: audit_logs.length,
+        deleted_teams: deleted_teams.length,
+      },
+      data: {
+        users,
+        teams,
+        team_members,
+        audit_logs,
+        deleted_teams,
+      },
+    };
+
+    await logAudit(c, 'DATABASE_BACKUP_EXPORTED', 'SYSTEM', {
+      user_count: users.length,
+      team_count: teams.length,
+      member_count: team_members.length,
+    });
+
+    return c.json(backup);
+  } catch (err: any) {
+    return c.json({ detail: `Backup failed: ${err?.message || 'Database error'}` }, 500);
+  }
+});
