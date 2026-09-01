@@ -191,3 +191,53 @@ adminUsersRouter.get('/backup-database', async (c) => {
     return c.json({ detail: `Backup failed: ${err?.message || 'Database error'}` }, 500);
   }
 });
+
+// ─── POST /admin/normalize-usn-data — Auto-Correct Years & Depts from USN ─────
+
+adminUsersRouter.post('/normalize-usn-data', async (c) => {
+  try {
+    // 1. Year Corrections based on USN series (23->Yr4, 24->Yr3, 25->Yr2, 26->Yr1)
+    await c.env.DB.prepare("UPDATE team_members SET year = 4 WHERE UPPER(TRIM(usn)) LIKE '%1NC23%'").run();
+    await c.env.DB.prepare("UPDATE team_members SET year = 3 WHERE UPPER(TRIM(usn)) LIKE '%1NC24%'").run();
+    await c.env.DB.prepare("UPDATE team_members SET year = 2 WHERE UPPER(TRIM(usn)) LIKE '%1NC25%'").run();
+    await c.env.DB.prepare("UPDATE team_members SET year = 1 WHERE UPPER(TRIM(usn)) LIKE '%1NC26%'").run();
+
+    await c.env.DB.prepare("UPDATE users SET year = 4 WHERE UPPER(TRIM(usn)) LIKE '%1NC23%'").run();
+    await c.env.DB.prepare("UPDATE users SET year = 3 WHERE UPPER(TRIM(usn)) LIKE '%1NC24%'").run();
+    await c.env.DB.prepare("UPDATE users SET year = 2 WHERE UPPER(TRIM(usn)) LIKE '%1NC25%'").run();
+    await c.env.DB.prepare("UPDATE users SET year = 1 WHERE UPPER(TRIM(usn)) LIKE '%1NC26%'").run();
+
+    // 2. Department Corrections based on USN codes (CS=>CSE, IS=>ISE, EC=>ECE, CD=>Data Science, CI=>AIML, BC=>BCA, CV=>Civil, ME=>Mechanical)
+    await c.env.DB.prepare("UPDATE team_members SET department = 'CSE' WHERE UPPER(TRIM(usn)) LIKE '%CS%'").run();
+    await c.env.DB.prepare("UPDATE users SET department = 'CSE' WHERE UPPER(TRIM(usn)) LIKE '%CS%'").run();
+
+    await c.env.DB.prepare("UPDATE team_members SET department = 'ISE' WHERE UPPER(TRIM(usn)) LIKE '%IS%'").run();
+    await c.env.DB.prepare("UPDATE users SET department = 'ISE' WHERE UPPER(TRIM(usn)) LIKE '%IS%'").run();
+
+    await c.env.DB.prepare("UPDATE team_members SET department = 'ECE' WHERE UPPER(TRIM(usn)) LIKE '%EC%'").run();
+    await c.env.DB.prepare("UPDATE users SET department = 'ECE' WHERE UPPER(TRIM(usn)) LIKE '%EC%'").run();
+
+    await c.env.DB.prepare("UPDATE team_members SET department = 'Data Science' WHERE UPPER(TRIM(usn)) LIKE '%CD%'").run();
+    await c.env.DB.prepare("UPDATE users SET department = 'Data Science' WHERE UPPER(TRIM(usn)) LIKE '%CD%'").run();
+
+    await c.env.DB.prepare("UPDATE team_members SET department = 'AIML' WHERE UPPER(TRIM(usn)) LIKE '%CI%'").run();
+    await c.env.DB.prepare("UPDATE users SET department = 'AIML' WHERE UPPER(TRIM(usn)) LIKE '%CI%'").run();
+
+    await c.env.DB.prepare("UPDATE team_members SET department = 'BCA' WHERE UPPER(TRIM(usn)) LIKE '%BC%' OR UPPER(TRIM(usn)) LIKE '%BCA%'").run();
+    await c.env.DB.prepare("UPDATE users SET department = 'BCA' WHERE UPPER(TRIM(usn)) LIKE '%BC%' OR UPPER(TRIM(usn)) LIKE '%BCA%'").run();
+
+    await c.env.DB.prepare("UPDATE team_members SET department = 'Civil' WHERE UPPER(TRIM(usn)) LIKE '%CV%'").run();
+    await c.env.DB.prepare("UPDATE users SET department = 'Civil' WHERE UPPER(TRIM(usn)) LIKE '%CV%'").run();
+
+    await c.env.DB.prepare("UPDATE team_members SET department = 'Mechanical' WHERE UPPER(TRIM(usn)) LIKE '%ME%'").run();
+    await c.env.DB.prepare("UPDATE users SET department = 'Mechanical' WHERE UPPER(TRIM(usn)) LIKE '%ME%'").run();
+
+    await logAudit(c, 'DATA_NORMALIZATION_EXECUTED', 'SYSTEM', {
+      rules: 'USN Year & Branch auto-correction applied (23->Yr4, 24->Yr3, 25->Yr2, 26->Yr1, CS->CSE, IS->ISE, EC->ECE, CD->Data Science, CI->AIML, BC->BCA)',
+    });
+
+    return c.json({ success: true, message: 'Data normalization completed. All student years and departments auto-corrected based on USN codes.' });
+  } catch (err: any) {
+    return c.json({ detail: `Normalization failed: ${err?.message || 'Database error'}` }, 500);
+  }
+});

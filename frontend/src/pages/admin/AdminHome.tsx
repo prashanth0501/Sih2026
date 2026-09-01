@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { getAdminStats, downloadDatabaseBackup } from '@/api/stats';
+import { getAdminStats, downloadDatabaseBackup, triggerDataNormalization } from '@/api/stats';
 import { listAllTeams, type ApiTeam, type ApiTeamMember } from '@/api/teams';
 import { StatusBadge } from '@/components/ui/StatusBadge';
 import { type ScreeningStatus } from '@/lib/data';
@@ -57,6 +57,7 @@ export function AdminHome() {
   const [selectedTeam, setSelectedTeam] = useState<ApiTeam | null>(null);
   const [showStudentListModal, setShowStudentListModal] = useState(false);
   const [isBackingUp, setIsBackingUp] = useState(false);
+  const [isNormalizing, setIsNormalizing] = useState(false);
   const [backupMsg, setBackupMsg] = useState('');
 
   const { data: stats } = useQuery({
@@ -65,7 +66,7 @@ export function AdminHome() {
     refetchInterval: 10000,
   });
 
-  const { data: teams = [] } = useQuery({
+  const { data: teams = [], refetch: refetchTeams } = useQuery({
     queryKey: ['all-teams-overview'],
     queryFn: () => listAllTeams({ page_size: 1000 }),
     refetchInterval: 10000,
@@ -83,6 +84,22 @@ export function AdminHome() {
       setBackupMsg(`⚠️ Backup failed: ${err?.message || 'Error downloading backup'}`);
     } finally {
       setIsBackingUp(false);
+    }
+  }
+
+  // Data Normalization Handler (Auto-correct USN Years & Depts)
+  async function handleRunNormalization() {
+    try {
+      setIsNormalizing(true);
+      setBackupMsg('Running USN auto-correction rules on database...');
+      const res = await triggerDataNormalization();
+      await refetchTeams();
+      setBackupMsg(`✓ ${res.message || 'Data normalization completed!'}`);
+      setTimeout(() => setBackupMsg(''), 6000);
+    } catch (err: any) {
+      setBackupMsg(`⚠️ Normalization failed: ${err?.response?.data?.detail || err?.message || 'Error normalizing data'}`);
+    } finally {
+      setIsNormalizing(false);
     }
   }
 
@@ -353,6 +370,15 @@ export function AdminHome() {
           >
             <span>💾</span>
             <span>{isBackingUp ? 'Exporting...' : 'Backup Database (JSON)'}</span>
+          </button>
+
+          <button
+            onClick={handleRunNormalization}
+            disabled={isNormalizing}
+            className="rounded-xl border border-marigold/40 bg-marigold/10 px-4 py-2 text-[0.8rem] font-bold text-marigold hover:bg-marigold/20 transition-all flex items-center gap-2 cursor-pointer shadow-xs disabled:opacity-50"
+          >
+            <span>⚡</span>
+            <span>{isNormalizing ? 'Correcting Data...' : 'Auto-Correct USN Data'}</span>
           </button>
         </div>
       </div>

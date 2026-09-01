@@ -43,3 +43,8 @@ export async function downloadDatabaseBackup() {
   URL.revokeObjectURL(url);
   return data;
 }
+
+export async function triggerDataNormalization() {
+  const { data } = await api.post<{ success: boolean; message: string }>('/admin/normalize-usn-data');
+  return data;
+}
