@@ -7,12 +7,13 @@ export const contentRouter = new Hono<AppEnv>();
 contentRouter.get('/settings', async (c) => {
   const settings = await c.env.DB.prepare('SELECT * FROM system_settings WHERE id = ?').bind('global_settings').first();
   if (!settings) {
-    return c.json({ registration_open: true, level1_open: true, level2_open: true });
+    return c.json({ registration_open: false, level1_open: false, level2_open: false, event_concluded: true });
   }
   return c.json({
     registration_open: Boolean(settings.registration_open),
     level1_open: Boolean(settings.level1_open),
     level2_open: Boolean(settings.level2_open),
+    event_concluded: true,
   });
 });
 

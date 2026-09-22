@@ -41,13 +41,23 @@ export function Login() {
       <Reveal>
         
         {/* Header Block */}
-        <div className="text-center flex flex-col items-center justify-center mx-auto space-y-3 mb-8">
-          <div className="eyebrow">Welcome Back</div>
+        <div className="text-center flex flex-col items-center justify-center mx-auto space-y-3 mb-6">
+          <div className="eyebrow">SIH 2026 Portal</div>
           <h1 className="text-3xl sm:text-5xl font-bold tracking-tight text-ink text-center">
-            Log in to Portal
+            Portal Log in
           </h1>
           <p className="lede text-center mx-auto text-base text-ink-soft max-w-sm">
-            Access your SIH 2026 team dashboard and submission status.
+            Access your team dashboard or Coordinator control center.
+          </p>
+        </div>
+
+        {/* Event Concluded Notice Banner */}
+        <div className="mb-6 rounded-2xl border border-marigold/40 bg-marigold/10 p-4 text-center text-ink shadow-xs">
+          <div className="mono text-[0.68rem] font-bold uppercase tracking-wider text-marigold">
+            🏆 SIH 2026 Internal Hackathon Concluded
+          </div>
+          <p className="mt-1 text-xs text-ink-soft">
+            The screening rounds are complete. Participants can view final results on the homepage. Coordinators and Admins can log in below to access screening statistics &amp; reports.
           </p>
         </div>
 

@@ -4,6 +4,7 @@ export type SystemSettings = {
   registration_open: boolean;
   level1_open: boolean;
   level2_open: boolean;
+  event_concluded?: boolean;
 };
 
 export async function getSystemSettings() {

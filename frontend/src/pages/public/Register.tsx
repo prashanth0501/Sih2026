@@ -155,16 +155,45 @@ export function Register() {
 
   if (settings && !settings.registration_open) {
     return (
-      <div className="mx-auto max-w-lg px-5 py-32 text-center sm:px-8">
+      <div className="mx-auto max-w-2xl px-5 py-20 text-center sm:px-8">
         <Reveal>
-          <div className="rounded-3xl border border-red-700/30 bg-red-950/20 p-8 text-paper">
-            <h1 className="font-display text-2xl font-bold text-red-400">Registrations Are Closed</h1>
-            <p className="mt-3 text-sm text-paper/80">
-              The SIH 2026 portal registration has been paused or closed by the admin. Please contact your campus SPOC or coordinators for support.
+          <div className="rounded-3xl border-2 border-marigold/40 bg-paper-2 p-8 sm:p-12 text-ink shadow-2xl space-y-6">
+            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-marigold/20 text-3xl">
+              🏆
+            </div>
+            <div className="mono text-xs font-bold uppercase tracking-wider text-marigold">
+              SIH 2026 Internal Hackathon · Event Concluded
+            </div>
+            <h1 className="font-display text-3xl font-bold text-ink sm:text-4xl">
+              Registrations Are Officially Closed
+            </h1>
+            <p className="text-base text-ink-soft max-w-lg mx-auto leading-relaxed">
+              The internal screening rounds for Smart India Hackathon 2026 at NCET have successfully completed. Thank you to all <strong>100+ registered teams</strong> and <strong>600+ student hackers</strong> for participating!
             </p>
-            <Link to="/" className="mono mt-6 inline-block text-xs font-bold text-marigold hover:underline">
-              ← Return to homepage
-            </Link>
+
+            <div className="grid gap-3 sm:grid-cols-3 pt-4 border-t border-line">
+              <div className="p-3.5 border border-line bg-paper rounded-2xl">
+                <div className="font-display text-2xl font-bold text-marigold">100+</div>
+                <div className="mono text-[0.68rem] text-ink-soft mt-0.5 uppercase">Registered Teams</div>
+              </div>
+              <div className="p-3.5 border border-line bg-paper rounded-2xl">
+                <div className="font-display text-2xl font-bold text-marigold">600+</div>
+                <div className="mono text-[0.68rem] text-ink-soft mt-0.5 uppercase">Student Hackers</div>
+              </div>
+              <div className="p-3.5 border border-line bg-paper rounded-2xl">
+                <div className="font-display text-2xl font-bold text-emerald-600">50 Teams</div>
+                <div className="mono text-[0.68rem] text-ink-soft mt-0.5 uppercase">Shortlisted for SIH</div>
+              </div>
+            </div>
+
+            <div className="flex flex-wrap items-center justify-center gap-4 pt-4">
+              <Link to="/problem-statements" className="rounded-full bg-marigold px-6 py-3.5 text-xs font-bold text-slate-950 hover:bg-marigold/90 transition-colors shadow-md">
+                Explore Shortlisted 50 Teams 🎯 →
+              </Link>
+              <Link to="/gallery" className="rounded-full border border-line bg-paper px-6 py-3.5 text-xs font-bold text-ink hover:border-marigold transition-colors">
+                Event Gallery &amp; Photos 📸
+              </Link>
+            </div>
           </div>
         </Reveal>
       </div>

@@ -1,114 +1,163 @@
-import { useQuery } from '@tanstack/react-query';
+import { Link } from 'react-router-dom';
 import { LinkButton } from '@/components/ui/Button';
-import { StatCounter } from '@/components/ui/StatCounter';
 import { Reveal } from '@/components/Reveal';
-import { getPublicStats } from '@/api/stats';
-import { PROBLEM_THEMES } from '@/lib/data';
 
 export function Landing() {
-  const { data: stats } = useQuery({ queryKey: ['public-stats'], queryFn: getPublicStats });
 
   return (
     <>
-      <section className="flex min-h-svh items-center px-5 pt-24 sm:px-8">
+      {/* HERO SECTION — EVENT CONCLUDED ANNOUNCEMENT */}
+      <section className="flex min-h-[90vh] items-center px-5 pt-28 pb-16 sm:px-8">
         <div className="mx-auto w-full max-w-[1180px]">
-          <div className="grid items-center gap-10 md:grid-cols-[1.15fr_.85fr]">
+          <div className="grid items-center gap-12 md:grid-cols-[1.15fr_.85fr]">
             <div>
-              <div className="eyebrow mb-5 flex items-center gap-2.5 text-left">
-                <span className="h-px w-7 bg-marigold" /> Internal Screening Portal · SIH 2026
+              <div className="eyebrow mb-5 flex items-center gap-2.5 text-left text-marigold font-bold">
+                <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
+                <span>SIH 2026 Internal Hackathon · Concluded Successfully</span>
               </div>
-              <h1 className="text-[clamp(2.6rem,6vw,5rem)] leading-[1.02]">
-                Every idea
+              <h1 className="text-[clamp(2.5rem,5.5vw,4.5rem)] font-bold leading-[1.04] text-ink">
+                Every idea starts as <em className="not-italic text-marigold italic">a spark.</em>
                 <br />
-                starts as <em className="not-italic text-marigold italic">a spark.</em>
+                Every team found its stage.
               </h1>
-              <p className="mt-6 max-w-[46ch] text-[1.08rem] text-ink-soft">
-                No problem is too big. No idea is too small. Register your team, send in your idea, and
-                watch it grow through two rounds — all the way to the national stage.
+              <p className="mt-6 max-w-[50ch] text-[1.08rem] text-ink-soft leading-relaxed">
+                The internal screening rounds for <strong>Smart India Hackathon 2026</strong> at NCET have officially concluded. Over <strong>100+ teams</strong> and <strong>600+ student hackers</strong> developed groundbreaking solutions across hardware and software themes.
               </p>
+
               <div className="mt-8 flex flex-wrap gap-4">
-                <LinkButton to="/register" variant="primary">
-                  Register your team →
+                <LinkButton to="/problem-statements" variant="primary" className="shadow-lg shadow-marigold/25">
+                  Explore Shortlisted 50 Teams 🏆 →
                 </LinkButton>
-                <LinkButton to="/problem-statements" variant="ghost">
-                  Explore problem statements
+                <LinkButton to="/gallery" variant="ghost" className="border-line">
+                  View Event Gallery 📸
                 </LinkButton>
               </div>
             </div>
 
-            <div className="relative mx-auto aspect-square w-full max-w-56 md:max-w-none">
+            {/* Glowing Innovation Orb */}
+            <div className="relative mx-auto aspect-square w-full max-w-64 md:max-w-none">
               <div className="absolute inset-0 animate-[spin_40s_linear_infinite] rounded-full border border-line motion-reduce:animate-none" />
               <div className="absolute inset-[12%] animate-[spin_55s_linear_infinite_reverse] rounded-full border border-indigo/40 motion-reduce:animate-none" />
-              <div className="absolute inset-[26%] rounded-full border border-dashed border-line" />
+              <div className="absolute inset-[26%] rounded-full border border-dashed border-marigold/40" />
               <div
-                className="absolute inset-[32%] rounded-full"
+                className="absolute inset-[32%] rounded-full flex items-center justify-center text-center p-4"
                 style={{
                   background: 'radial-gradient(circle at 35% 30%, var(--color-spark-glow), var(--color-spark) 45%, var(--color-marigold) 100%)',
-                  boxShadow: '0 0 60px var(--color-spark-glow), 0 0 120px color-mix(in srgb, var(--color-marigold) 30%, transparent)',
+                  boxShadow: '0 0 60px var(--color-spark-glow), 0 0 120px color-mix(in srgb, var(--color-marigold) 35%, transparent)',
                 }}
-              />
+              >
+                <div className="text-slate-950 font-bold font-display leading-tight">
+                  <div className="text-2xl sm:text-3xl">50</div>
+                  <div className="text-[0.65rem] uppercase tracking-wider font-mono">Teams Selected</div>
+                </div>
+              </div>
             </div>
           </div>
 
-          <div className="mt-16">
-            <div className="grid grid-cols-2 gap-px border border-line bg-line sm:grid-cols-4">
-              <StatCounter target={stats?.teams_registered ?? 0} label="Teams registered" />
-              <StatCounter target={stats?.ideas_submitted ?? 0} label="Ideas submitted" />
-              <StatCounter target={stats?.problem_statements ?? PROBLEM_THEMES.length} label="Problem themes" />
-              <StatCounter target={stats?.days_to_deadline ?? 0} label="Days to Level 1" />
+          {/* HIGH-IMPACT ARCHITECTED METRICS GRID */}
+          <div className="mt-20 border-t border-line pt-12">
+            <div className="mb-6 flex items-center justify-between">
+              <div>
+                <span className="mono text-xs font-bold uppercase tracking-wider text-marigold">Event Impact &amp; Key Metrics</span>
+                <h2 className="text-xl sm:text-2xl font-bold text-ink mt-0.5">SIH 2026 Participation Statistics</h2>
+              </div>
+              <span className="mono text-[0.7rem] text-ink-soft hidden sm:inline-block">Official NCET Internal Hackathon Audit</span>
             </div>
-            <p className="mono mt-2.5 text-[0.6rem] text-ink-soft/70">Live counts from the screening database</p>
+
+            <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-6">
+              <div className="group border border-line bg-paper p-5 rounded-2xl transition-all hover:border-marigold hover:shadow-lg">
+                <div className="text-2xl">🏆</div>
+                <div className="mt-3 font-display text-3xl sm:text-4xl font-bold text-marigold tabular-nums">100+</div>
+                <div className="mono text-[0.7rem] font-bold text-ink uppercase tracking-wider mt-1">Teams Registered</div>
+                <div className="text-[0.7rem] text-ink-soft mt-1">Multi-dept engineering rosters</div>
+              </div>
+
+              <div className="group border border-line bg-paper p-5 rounded-2xl transition-all hover:border-marigold hover:shadow-lg">
+                <div className="text-2xl">👥</div>
+                <div className="mt-3 font-display text-3xl sm:text-4xl font-bold text-marigold tabular-nums">600+</div>
+                <div className="mono text-[0.7rem] font-bold text-ink uppercase tracking-wider mt-1">Student Hackers</div>
+                <div className="text-[0.7rem] text-ink-soft mt-1">Innovators from 1st to 4th year</div>
+              </div>
+
+              <div className="group border border-emerald-600/30 bg-emerald-500/10 p-5 rounded-2xl transition-all hover:border-emerald-600 hover:shadow-lg">
+                <div className="text-2xl">🎯</div>
+                <div className="mt-3 font-display text-3xl sm:text-4xl font-bold text-emerald-600 tabular-nums">50</div>
+                <div className="mono text-[0.7rem] font-bold text-emerald-700 dark:text-emerald-400 uppercase tracking-wider mt-1">Teams Selected</div>
+                <div className="text-[0.7rem] text-ink-soft mt-1">Shortlisted for SIH National Round</div>
+              </div>
+
+              <div className="group border border-line bg-paper p-5 rounded-2xl transition-all hover:border-marigold hover:shadow-lg">
+                <div className="text-2xl">👩‍💻</div>
+                <div className="mt-3 font-display text-3xl sm:text-4xl font-bold text-marigold tabular-nums">100%</div>
+                <div className="mono text-[0.7rem] font-bold text-ink uppercase tracking-wider mt-1">Female Diversity</div>
+                <div className="text-[0.7rem] text-ink-soft mt-1">Gender-compliant teams</div>
+              </div>
+
+              <div className="group border border-line bg-paper p-5 rounded-2xl transition-all hover:border-marigold hover:shadow-lg">
+                <div className="text-2xl">🎓</div>
+                <div className="mt-3 font-display text-3xl sm:text-4xl font-bold text-marigold tabular-nums">8+</div>
+                <div className="mono text-[0.7rem] font-bold text-ink uppercase tracking-wider mt-1">Departments</div>
+                <div className="text-[0.7rem] text-ink-soft mt-1">CSE, ECE, AIML, DS, Civil, BCA...</div>
+              </div>
+
+              <div className="group border border-line bg-paper p-5 rounded-2xl transition-all hover:border-marigold hover:shadow-lg">
+                <div className="text-2xl">⏱️</div>
+                <div className="mt-3 font-display text-3xl sm:text-4xl font-bold text-marigold tabular-nums">24h</div>
+                <div className="mono text-[0.7rem] font-bold text-ink uppercase tracking-wider mt-1">Non-Stop Hack</div>
+                <div className="text-[0.7rem] text-ink-soft mt-1">Mentoring &amp; live evaluation</div>
+              </div>
+            </div>
           </div>
         </div>
       </section>
 
-      <section className="px-5 py-20 sm:px-8 md:py-28">
+      {/* SHORTLISTED TEAMS SPOTLIGHT BANNER */}
+      <section className="px-5 py-12 sm:px-8">
         <div className="mx-auto max-w-[1180px]">
           <Reveal>
-            <div className="relative mx-auto max-w-[720px] sm:h-[420px]">
-              <div
-                className="absolute inset-0 -z-10 hidden rounded-full opacity-40 blur-3xl sm:block"
-                style={{ background: 'radial-gradient(circle, var(--color-spark-glow), transparent 70%)' }}
-              />
-              <img
-                src="/hero/gears-team.webp"
-                alt="A team of students gathered around a mechanical prototype"
-                className="h-72 w-full rounded-2xl object-cover shadow-xl shadow-ink/15 sm:absolute sm:left-0 sm:top-0 sm:h-[300px] sm:w-[62%] sm:-rotate-1"
-              />
-              <img
-                src="/hero/lab-electronics.webp"
-                alt="Students wiring a circuit board together in a lab"
-                className="mt-5 h-56 w-full rounded-2xl object-cover shadow-xl shadow-ink/15 sm:absolute sm:bottom-0 sm:right-0 sm:mt-0 sm:h-[260px] sm:w-[46%] sm:rotate-1"
-              />
+            <div className="rounded-3xl border-2 border-emerald-600/40 bg-paper-2 p-8 sm:p-12 shadow-xl flex flex-wrap items-center justify-between gap-6">
+              <div className="space-y-2 max-w-xl">
+                <span className="mono text-xs font-bold text-emerald-600 uppercase tracking-wider">National Qualification Spotlight</span>
+                <h2 className="font-display text-2xl sm:text-4xl font-bold text-ink">
+                  50 Shortlisted Teams Advancing to SIH National Stage
+                </h2>
+                <p className="text-sm sm:text-base text-ink-soft leading-relaxed">
+                  Following rigorous Level 1 and Level 2 screening evaluations, 50 exceptional teams have been selected to represent NCET in the Smart India Hackathon 2026.
+                </p>
+              </div>
+
+              <Link
+                to="/problem-statements"
+                className="rounded-2xl bg-emerald-600 px-8 py-4 text-sm font-bold text-white shadow-lg hover:bg-emerald-700 transition-all cursor-pointer whitespace-nowrap"
+              >
+                View Selected 50 Teams 🏆 →
+              </Link>
             </div>
           </Reveal>
-          <p className="mono mt-6 text-center text-[0.62rem] text-ink-soft/60">
-            Hackathons look the same everywhere — heads down, screens open, deadline getting closer.
-          </p>
         </div>
       </section>
 
-      <section className="px-5 py-20 sm:px-8 md:py-28">
+      {/* GALLERY & PODIUM HIGHLIGHTS */}
+      <section className="px-5 py-16 sm:px-8 md:py-24">
         <div className="mx-auto max-w-[1180px]">
           <Reveal>
-            <div className="relative overflow-hidden rounded-2xl">
+            <div className="relative overflow-hidden rounded-3xl border border-line shadow-2xl">
               <img
                 src="/gallery/nodal-podium.webp"
-                alt="A speaker addressing the SIH 2025 nodal-centre audience from a Nagarjuna-branded podium"
-                className="h-72 w-full object-cover sm:h-[420px]"
+                alt="A speaker addressing the SIH nodal-centre audience"
+                className="h-80 w-full object-cover sm:h-[460px]"
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-ink/85 via-ink/25 to-transparent" />
-              <div className="absolute inset-x-0 bottom-0 p-6 sm:p-10">
-                <div className="mono mb-3 text-[0.68rem] text-spark-glow">Nodal Centre · SIH 2025</div>
-                <h2 className="max-w-[24ch] text-[clamp(1.5rem,3.5vw,2.4rem)] text-paper">
+              <div className="absolute inset-0 bg-gradient-to-t from-ink/90 via-ink/35 to-transparent" />
+              <div className="absolute inset-x-0 bottom-0 p-6 sm:p-12">
+                <div className="mono mb-3 text-xs text-spark-glow font-bold uppercase tracking-wider">Official Nodal Centre · SIH 2025 &amp; 2026</div>
+                <h2 className="max-w-[24ch] text-[clamp(1.6rem,3.8vw,2.6rem)] font-bold text-paper">
                   We didn't just send a team. We hosted the floor.
                 </h2>
-                <p className="mt-3 max-w-[56ch] text-[0.92rem] text-paper/80">
-                  Nagarjuna was chosen as an official Nodal Centre for SIH 2025 — judges, dignitaries, and
-                  teams from across the region, on our own campus.
+                <p className="mt-3 max-w-[56ch] text-[0.95rem] text-paper/80 leading-relaxed">
+                  Nagarjuna College of Engineering and Technology (NCET) stands proud as an official Nodal Centre, bringing together top judges, dignitaries, and innovators on our campus.
                 </p>
-                <LinkButton to="/gallery" variant="ghost" className="mt-5 border-paper/40 text-paper hover:bg-paper/10">
-                  See how it went →
+                <LinkButton to="/gallery" variant="ghost" className="mt-6 border-paper/40 text-paper hover:bg-paper/10">
+                  See Hackathon Gallery &amp; Photos 📸 →
                 </LinkButton>
               </div>
             </div>
@@ -116,35 +165,36 @@ export function Landing() {
         </div>
       </section>
 
-      <section className="px-5 py-24 sm:px-8 md:py-36">
+      {/* WHY THIS MATTERS — HALL OF FAME */}
+      <section className="px-5 py-16 sm:px-8 md:py-24 border-t border-line">
         <div className="mx-auto grid max-w-[1180px] gap-10 md:grid-cols-[180px_1fr]">
-          <div className="mono text-[0.7rem] text-ink-soft md:[writing-mode:vertical-rl] md:[text-orientation:mixed]">
-            Why this exists
+          <div className="mono text-[0.7rem] text-ink-soft md:[writing-mode:vertical-rl] md:[text-orientation:mixed] font-bold uppercase tracking-wider">
+            Why this matters
           </div>
           <div className="grid gap-7">
             {[
               {
                 k: '01',
-                title: 'Solve a real problem, now',
-                body: "Your coursework can answer a problem that a real hospital, ministry, or company actually has. You don't have to wait until after college.",
+                title: 'Solving Real-World National Challenges',
+                body: 'Our student teams engineered solutions for problems directly submitted by Union Ministries, State Departments, and industry leaders.',
               },
               {
                 k: '02',
-                title: 'A fair, open process',
-                body: 'Every team goes through the same two rounds. Every score and every comment is saved, so you always know where your idea stands.',
+                title: 'Rigorous Transparent Evaluation',
+                body: 'Every single team went through two transparent screening rounds with detailed feedback recorded on the portal.',
               },
               {
                 k: '03',
-                title: 'One nationwide stage',
-                body: "If your team is selected, you don't just win here. You carry the college's name into India's biggest hackathon.",
+                title: 'Carrying NCET to the National Stage',
+                body: 'The 50 shortlisted teams carry NCET\'s legacy to the national finals of India\'s largest hackathon.',
               },
             ].map((item, i) => (
               <Reveal key={item.k} delay={i * 0.08}>
                 <div className="grid grid-cols-[56px_1fr] gap-5 border-t border-line py-6">
-                  <div className="mono text-marigold">{item.k}</div>
+                  <div className="mono font-bold text-marigold">{item.k}</div>
                   <div>
-                    <h3 className="mb-2 text-[1.3rem] font-bold">{item.title}</h3>
-                    <p className="max-w-[60ch] text-ink-soft">{item.body}</p>
+                    <h3 className="mb-2 text-[1.3rem] font-bold text-ink">{item.title}</h3>
+                    <p className="max-w-[60ch] text-ink-soft leading-relaxed">{item.body}</p>
                   </div>
                 </div>
               </Reveal>
@@ -153,44 +203,23 @@ export function Landing() {
         </div>
       </section>
 
-      <section className="px-5 py-24 sm:px-8 md:py-36">
+      {/* FOOTER CTA SECTION */}
+      <section className="px-5 py-20 text-center sm:px-8 md:py-28 bg-paper-2 border-t border-line">
         <div className="mx-auto max-w-[1180px]">
           <Reveal>
-            <div className="eyebrow mb-5">The Innovation Pipeline</div>
-            <h2 className="max-w-[24ch] text-[clamp(1.8rem,4vw,2.6rem)]">One idea. Four stops. One clear path.</h2>
-          </Reveal>
-          <div className="mt-14 flex snap-x-strip -mx-5 px-5 sm:mx-0 sm:grid sm:grid-cols-4 sm:gap-5 sm:px-0">
-            {[
-              { step: 'Step 01', title: 'Concept', body: 'Build your team. Pick a problem you care about. Register.' },
-              { step: 'Step 02', title: 'Level 1', body: 'Send in your first idea. A coordinator reads it and tells you what to improve.' },
-              { step: 'Step 03', title: 'Level 2', body: 'Make it better and send it again. This round decides who moves ahead.' },
-              { step: 'Step 04', title: 'Finale', body: 'Selected teams get their certificate. The national SIH begins.' },
-            ].map((n, i) => (
-              <Reveal key={n.step} delay={i * 0.08} className="w-[78%] shrink-0 sm:w-auto">
-                <div className="h-full rounded-xl border border-line bg-paper-2 p-6">
-                  <div className="mb-4 h-2.5 w-2.5 rounded-full bg-spark" style={{ boxShadow: '0 0 10px var(--color-spark-glow)' }} />
-                  <div className="mono text-[0.68rem] text-ink-soft">{n.step}</div>
-                  <h3 className="my-2.5 text-[1.15rem] font-bold">{n.title}</h3>
-                  <p className="text-[0.88rem] text-ink-soft">{n.body}</p>
-                </div>
-              </Reveal>
-            ))}
-          </div>
-          <p className="mono mt-2.5 text-[0.62rem] text-ink-soft/60 sm:hidden">← swipe to see all four →</p>
-        </div>
-      </section>
-
-      <section className="px-5 py-24 text-center sm:px-8 md:py-36">
-        <div className="mx-auto max-w-[1180px]">
-          <Reveal>
-            <div className="eyebrow mb-5 flex justify-center">Ready when you are</div>
-            <h2 className="mx-auto max-w-[16ch] text-[clamp(2.2rem,5vw,3.6rem)]">Your idea has somewhere to go.</h2>
-            {stats && stats.days_to_deadline > 0 && (
-              <p className="mono mt-5 text-[0.75rem] text-marigold">Registration window closes in {stats.days_to_deadline} days</p>
-            )}
-            <div className="mt-8 flex justify-center">
-              <LinkButton to="/register" variant="primary" className="px-10 py-5 text-[0.8rem]">
-                Start your team's journey →
+            <div className="eyebrow mb-4 flex justify-center text-marigold font-bold">Event Concluded</div>
+            <h2 className="mx-auto max-w-[18ch] text-[clamp(2rem,4.5vw,3.2rem)] font-bold text-ink">
+              Congratulations to all participating teams!
+            </h2>
+            <p className="mt-4 text-base text-ink-soft max-w-lg mx-auto">
+              Check out the 50 shortlisted teams, problem statement allocations, and photo highlights.
+            </p>
+            <div className="mt-8 flex flex-wrap justify-center gap-4">
+              <LinkButton to="/problem-statements" variant="primary" className="px-8 py-4 text-sm font-bold shadow-lg">
+                View Shortlisted 50 Teams 🏆 →
+              </LinkButton>
+              <LinkButton to="/gallery" variant="ghost" className="px-8 py-4 text-sm font-bold border-line">
+                View Photo Gallery 📸
               </LinkButton>
             </div>
           </Reveal>
