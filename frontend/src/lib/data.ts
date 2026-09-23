@@ -127,23 +127,13 @@ export const SIH_OFFICIAL = {
 export const DEVELOPERS = [
   {
     name: 'Partha Shankar',
-    role: 'Developer & Coordinator',
+    role: 'Lead Architect & Full Stack Developer',
     initials: 'PS',
     photoUrl: '/people/partha.webp',
     linkedin: 'https://www.linkedin.com/in/partha-shankar?utm_source=share_via&utm_content=profile&utm_medium=member_android',
     email: 'parthashankar21@gmail.com',
     phone: '+91 93531 89326',
-    bio: 'Designed and built this entire portal — frontend, backend, the screening flow, and the admin console. Also a coordinator running the internal hackathon.',
-  },
-  {
-    name: 'Nirmith M Jain',
-    role: 'Frontend Design & Coordinator',
-    initials: 'NJ',
-    photoUrl: '/people/nirmith.webp',
-    linkedin: 'https://www.linkedin.com/in/nirmith-m-jain-3126b027a?utm_source=share_via&utm_content=profile&utm_medium=member_android',
-    email: 'nirmithmjain@gmail.com',
-    phone: '+91 94821 10905',
-    bio: 'Assisted with the frontend design, and works as a coordinator for the internal hackathon.',
+    bio: 'Designed, architected, and built this entire portal — edge backend, Cloudflare D1 integration, responsive UI, two-tier screening engine, and administration console.',
   },
 ];
 

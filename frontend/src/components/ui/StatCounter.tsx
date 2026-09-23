@@ -1,5 +1,48 @@
 import { useEffect, useRef, useState } from 'react';
 
+export function AnimatedNumber({ target, suffix = '', duration = 1400 }: { target: number; suffix?: string; duration?: number }) {
+  const [value, setValue] = useState(0);
+  const ref = useRef<HTMLSpanElement>(null);
+  const started = useRef(false);
+
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting && !started.current) {
+            started.current = true;
+            if (reduceMotion) {
+              setValue(target);
+              return;
+            }
+            const start = performance.now();
+            const step = (now: number) => {
+              const p = Math.min((now - start) / duration, 1);
+              const eased = 1 - Math.pow(1 - p, 3);
+              setValue(Math.round(eased * target));
+              if (p < 1) requestAnimationFrame(step);
+            };
+            requestAnimationFrame(step);
+          }
+        });
+      },
+      { threshold: 0.2 }
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [target, duration]);
+
+  return (
+    <span ref={ref} className="tabular-nums">
+      {value.toLocaleString()}
+      {suffix}
+    </span>
+  );
+}
+
 export function StatCounter({ target, label, suffix = '' }: { target: number; label: string; suffix?: string }) {
   const [value, setValue] = useState(0);
   const ref = useRef<HTMLDivElement>(null);

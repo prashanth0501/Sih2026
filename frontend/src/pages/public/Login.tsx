@@ -54,10 +54,10 @@ export function Login() {
         {/* Event Concluded Notice Banner */}
         <div className="mb-6 rounded-2xl border border-marigold/40 bg-marigold/10 p-4 text-center text-ink shadow-xs">
           <div className="mono text-[0.68rem] font-bold uppercase tracking-wider text-marigold">
-            🏆 SIH 2026 Internal Hackathon Concluded
+            SIH 2026 Internal Hackathon Concluded
           </div>
           <p className="mt-1 text-xs text-ink-soft">
-            The screening rounds are complete. Participants can view final results on the homepage. Coordinators and Admins can log in below to access screening statistics &amp; reports.
+            The screening rounds are complete. Participants can view final statistics on the homepage. Coordinators and Admins can log in below to access screening analytics &amp; records.
           </p>
         </div>
 
@@ -109,9 +109,9 @@ export function Login() {
         </div>
 
         <p className="mt-6 text-center text-sm font-medium text-ink-soft">
-          New here?{' '}
+          Looking to register?{' '}
           <Link to="/register" className="font-bold text-marigold hover:underline">
-            Register your team for SIH 2026
+            View registration status
           </Link>
         </p>
 

@@ -1,27 +1,49 @@
+# Dependencies
 node_modules/
+frontend/node_modules/
+
+# Production builds & Cloudflare local state
 dist/
+frontend/dist/
+.wrangler/
+frontend/.wrangler/
+
+# Environment variables & secrets
 .env
-.env.local
+.env.*
+*.local
 ADMIN_CREDENTIALS.md
 CLOUDFLARE_CREDENTIALS.md
+*.pem
+*.key
+
+# IDE, OS & editor files
+.vscode/
+.idea/
 .claude/
+.DS_Store
+Thumbs.db
 
-# docs — kept locally for reference, not pushed to GitHub
+# PDF documents & raw data exports
+*.pdf
+*.xlsx
+*.csv
+
+# Internal documentation, reports, audits, plans & scratch folders
 docs/
-
-# backend
-backend/venv/
-backend/__pycache__/
-backend/**/__pycache__/
-*.pyc
-
-# frontend
-frontend/node_modules/
-frontend/dist/
-
-# Local audit reports, backups, and scratch scripts — kept local only
 backup/
 scratch/
+brain/
+*.sqlite
+*.sqlite-*
+
+# Ignore all internal audit / verification markdown documents
+*-audit*.md
+*-report*.md
+*-checklist*.md
+*-plan*.md
+*-strategy*.md
+*-matrix*.md
 authentication-audit.md
 authentication-verification-report.md
 backup-validation-report.md

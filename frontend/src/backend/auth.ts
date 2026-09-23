@@ -16,7 +16,7 @@ export function isSuperAdminUser(user: { email?: string; role?: string } | null 
 }
 
 // Valid departments — must match frontend list
-const VALID_DEPARTMENTS = [
+export const VALID_DEPARTMENTS = [
   'CSE', 'ISE', 'AI & ML', 'ECE', 'EEE',
   'Mechanical', 'Civil', 'Biotech',
   'BCA', 'MCA', 'MBA', 'Data Science',
@@ -165,142 +165,10 @@ export const authMiddleware = async (c: any, next: any) => {
 // ─── POST /auth/register ───────────────────────────────────────────────────────
 
 authRouter.post('/register', async (c) => {
-  const body = await c.req.json();
-
-  if (!body.email || !body.password) {
-    return c.json({ detail: 'Email and password are required' }, 400);
-  }
-
-  // Password Policy Check
-  const passCheck = validatePasswordPolicy(body.password);
-  if (!passCheck.valid) {
-    return c.json({ detail: passCheck.message }, 400);
-  }
-
-  if (body.department && !VALID_DEPARTMENTS.includes(body.department)) {
-    return c.json({ detail: `Invalid department. Must be one of: ${VALID_DEPARTMENTS.join(', ')}` }, 400);
-  }
-
-  const id = crypto.randomUUID();
-  const password_hash = await hashPassword(body.password);
-  const emailClean = String(body.email).toLowerCase().trim();
-  const usnClean = body.usn ? String(body.usn).trim().toUpperCase() : null;
-
-  // Check if user already exists in DB
-  const existingUser = await c.env.DB.prepare('SELECT * FROM users WHERE LOWER(TRIM(email)) = LOWER(?)')
-    .bind(emailClean)
-    .first();
-
-  if (existingUser) {
-    const validPassword = await verifyPassword(body.password, existingUser.password_hash as string);
-    if (validPassword) {
-      if (usnClean) {
-        await c.env.DB.prepare('UPDATE users SET usn = ? WHERE id = ?')
-          .bind(usnClean, existingUser.id)
-          .run();
-      }
-
-      const nowSeconds = Math.floor(Date.now() / 1000);
-      const secret = c.env.JWT_SECRET || 'dev-only-secret-change-me';
-      const token = await sign(
-        {
-          sub: existingUser.id,
-          email: existingUser.email,
-          role: existingUser.role || 'participant',
-          iss: 'ignite-sih',
-          aud: 'ignite-portal',
-          iat: nowSeconds,
-          exp: nowSeconds + 24 * 3600,
-        },
-        secret,
-        'HS256'
-      );
-
-      const userProfile = await c.env.DB.prepare(
-        'SELECT id, name, email, role, department, year, usn, gender, github_url, email_verified FROM users WHERE id = ?'
-      )
-        .bind(existingUser.id)
-        .first();
-
-      return c.json({ access_token: token, token_type: 'bearer', user: userProfile, email_verification_required: false });
-    } else {
-      return c.json({ detail: 'This email is already registered. Please enter your correct password or log in.' }, 400);
-    }
-  }
-
-  // Generate Email Verification Token
-  const verification_token = generateSecureToken();
-  const verification_expires_at = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(); // 24 hours
-
-  try {
-    await c.env.DB.prepare(
-      `INSERT INTO users (id, name, email, password_hash, role, department, year, usn, gender, github_url, email_verified, email_verified_at, verification_token, verification_expires_at, is_disabled, failed_login_attempts, created_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
-    )
-      .bind(
-        id,
-        body.name || '',
-        emailClean,
-        password_hash,
-        'participant',
-        body.department || 'CSE',
-        body.year || 1,
-        usnClean,
-        body.gender || 'Not Specified',
-        body.github_url || null,
-        0, // email_verified
-        null,
-        verification_token,
-        verification_expires_at,
-        0,
-        0,
-        new Date().toISOString()
-      )
-      .run();
-
-    // Dispatch Email Verification via Central Email Service
-    const emailService = CentralEmailService.fromEnv(c.env);
-    const appUrl = c.env.APP_URL || 'http://localhost:5173';
-    await emailService.sendVerificationEmail({
-      to: emailClean,
-      userName: body.name || 'Participant',
-      token: verification_token,
-      appUrl,
-    });
-
-    // Issue Hardened JWT with 24h Expiry
-    const nowSeconds = Math.floor(Date.now() / 1000);
-    const secret = c.env.JWT_SECRET || 'dev-only-secret-change-me';
-    const token = await sign(
-      {
-        sub: id,
-        email: emailClean,
-        role: 'participant',
-        iss: 'ignite-sih',
-        aud: 'ignite-portal',
-        iat: nowSeconds,
-        exp: nowSeconds + 24 * 3600,
-      },
-      secret,
-      'HS256'
-    );
-
-    const user = await c.env.DB.prepare(
-      'SELECT id, name, email, role, department, year, usn, gender, github_url, email_verified FROM users WHERE id = ?'
-    )
-      .bind(id)
-      .first();
-
-    await logAudit(c, 'REGISTER_SUCCESS', id, { email: emailClean });
-    await logAudit(c, 'VERIFICATION_SENT', id, { email: emailClean });
-
-    return c.json({ access_token: token, token_type: 'bearer', user, email_verification_required: true });
-  } catch (err: any) {
-    if (err?.message?.includes('UNIQUE') || err?.message?.includes('unique')) {
-      return c.json({ detail: 'This email is already registered. Please log in instead.' }, 400);
-    }
-    return c.json({ detail: 'Registration failed — please try again.' }, 400);
-  }
+  return c.json(
+    { detail: 'Registrations have been closed. Thank you for showing interest, come next year!' },
+    403
+  );
 });
 
 // ─── POST /auth/login ──────────────────────────────────────────────────────────

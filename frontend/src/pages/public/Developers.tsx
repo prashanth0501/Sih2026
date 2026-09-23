@@ -11,23 +11,14 @@ export function Developers() {
       <Reveal>
         <div className="text-center">
           <div className="eyebrow mb-5">Behind the portal</div>
-          <h1 className="mx-auto text-[clamp(2rem,5vw,3rem)]">Meet the Developers</h1>
+          <h1 className="mx-auto text-[clamp(2rem,5vw,3rem)]">Meet the Developer</h1>
           <p className="lede mx-auto mt-5 max-w-[65ch]">
-            This portal was designed and built entirely by two students at this college. If something's
-            broken, or you just want to talk shop, reach out directly.
+            This portal was designed, architected, and built entirely by Partha Shankar at NCET. If something's broken, or you just want to connect, reach out directly.
           </p>
         </div>
       </Reveal>
 
-      <div className="relative mt-20 grid gap-16 sm:grid-cols-2 sm:gap-8">
-        <svg
-          className="pointer-events-none absolute left-1/2 top-16 hidden -translate-x-1/2 sm:block"
-          width="240"
-          height="4"
-          aria-hidden="true"
-        >
-          <line x1="0" y1="2" x2="240" y2="2" stroke="var(--color-line)" strokeWidth="2" strokeDasharray="2 8" />
-        </svg>
+      <div className="relative mt-16 max-w-md mx-auto flex justify-center">
 
         {DEVELOPERS.map((dev, i) => (
           <Reveal key={dev.name} delay={i * 0.12}>

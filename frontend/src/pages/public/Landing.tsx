@@ -1,13 +1,13 @@
-import { Link } from 'react-router-dom';
 import { LinkButton } from '@/components/ui/Button';
 import { Reveal } from '@/components/Reveal';
+import { AnimatedNumber } from '@/components/ui/StatCounter';
 
 export function Landing() {
 
   return (
     <>
       {/* HERO SECTION — EVENT CONCLUDED ANNOUNCEMENT */}
-      <section className="flex min-h-[90vh] items-center px-5 pt-28 pb-16 sm:px-8">
+      <section className="flex min-h-[80vh] items-center px-5 pt-28 pb-16 sm:px-8">
         <div className="mx-auto w-full max-w-[1180px]">
           <div className="grid items-center gap-12 md:grid-cols-[1.15fr_.85fr]">
             <div>
@@ -23,15 +23,6 @@ export function Landing() {
               <p className="mt-6 max-w-[50ch] text-[1.08rem] text-ink-soft leading-relaxed">
                 The internal screening rounds for <strong>Smart India Hackathon 2026</strong> at NCET have officially concluded. Over <strong>100+ teams</strong> and <strong>600+ student hackers</strong> developed groundbreaking solutions across hardware and software themes.
               </p>
-
-              <div className="mt-8 flex flex-wrap gap-4">
-                <LinkButton to="/problem-statements" variant="primary" className="shadow-lg shadow-marigold/25">
-                  Explore Shortlisted 50 Teams 🏆 →
-                </LinkButton>
-                <LinkButton to="/gallery" variant="ghost" className="border-line">
-                  View Event Gallery 📸
-                </LinkButton>
-              </div>
             </div>
 
             {/* Glowing Innovation Orb */}
@@ -64,76 +55,48 @@ export function Landing() {
               <span className="mono text-[0.7rem] text-ink-soft hidden sm:inline-block">Official NCET Internal Hackathon Audit</span>
             </div>
 
-            <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-6">
+            <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
               <div className="group border border-line bg-paper p-5 rounded-2xl transition-all hover:border-marigold hover:shadow-lg">
-                <div className="text-2xl">🏆</div>
-                <div className="mt-3 font-display text-3xl sm:text-4xl font-bold text-marigold tabular-nums">100+</div>
-                <div className="mono text-[0.7rem] font-bold text-ink uppercase tracking-wider mt-1">Teams Registered</div>
+                <div className="font-display text-3xl sm:text-4xl font-bold text-marigold tabular-nums">
+                  <AnimatedNumber target={100} suffix="+" />
+                </div>
+                <div className="mono text-[0.7rem] font-bold text-ink uppercase tracking-wider mt-2">Teams Registered</div>
                 <div className="text-[0.7rem] text-ink-soft mt-1">Multi-dept engineering rosters</div>
               </div>
 
               <div className="group border border-line bg-paper p-5 rounded-2xl transition-all hover:border-marigold hover:shadow-lg">
-                <div className="text-2xl">👥</div>
-                <div className="mt-3 font-display text-3xl sm:text-4xl font-bold text-marigold tabular-nums">600+</div>
-                <div className="mono text-[0.7rem] font-bold text-ink uppercase tracking-wider mt-1">Student Hackers</div>
+                <div className="font-display text-3xl sm:text-4xl font-bold text-marigold tabular-nums">
+                  <AnimatedNumber target={600} suffix="+" />
+                </div>
+                <div className="mono text-[0.7rem] font-bold text-ink uppercase tracking-wider mt-2">Student Hackers</div>
                 <div className="text-[0.7rem] text-ink-soft mt-1">Innovators from 1st to 4th year</div>
               </div>
 
               <div className="group border border-emerald-600/30 bg-emerald-500/10 p-5 rounded-2xl transition-all hover:border-emerald-600 hover:shadow-lg">
-                <div className="text-2xl">🎯</div>
-                <div className="mt-3 font-display text-3xl sm:text-4xl font-bold text-emerald-600 tabular-nums">50</div>
-                <div className="mono text-[0.7rem] font-bold text-emerald-700 dark:text-emerald-400 uppercase tracking-wider mt-1">Teams Selected</div>
-                <div className="text-[0.7rem] text-ink-soft mt-1">Shortlisted for SIH National Round</div>
+                <div className="font-display text-3xl sm:text-4xl font-bold text-emerald-600 tabular-nums">
+                  <AnimatedNumber target={50} />
+                </div>
+                <div className="mono text-[0.7rem] font-bold text-emerald-700 dark:text-emerald-400 uppercase tracking-wider mt-2">Teams Selected</div>
+                <div className="text-[0.7rem] text-ink-soft mt-1">50 teams selected</div>
               </div>
 
               <div className="group border border-line bg-paper p-5 rounded-2xl transition-all hover:border-marigold hover:shadow-lg">
-                <div className="text-2xl">👩‍💻</div>
-                <div className="mt-3 font-display text-3xl sm:text-4xl font-bold text-marigold tabular-nums">100%</div>
-                <div className="mono text-[0.7rem] font-bold text-ink uppercase tracking-wider mt-1">Female Diversity</div>
+                <div className="font-display text-3xl sm:text-4xl font-bold text-marigold tabular-nums">
+                  <AnimatedNumber target={100} suffix="%" />
+                </div>
+                <div className="mono text-[0.7rem] font-bold text-ink uppercase tracking-wider mt-2">Female Diversity</div>
                 <div className="text-[0.7rem] text-ink-soft mt-1">Gender-compliant teams</div>
               </div>
 
               <div className="group border border-line bg-paper p-5 rounded-2xl transition-all hover:border-marigold hover:shadow-lg">
-                <div className="text-2xl">🎓</div>
-                <div className="mt-3 font-display text-3xl sm:text-4xl font-bold text-marigold tabular-nums">8+</div>
-                <div className="mono text-[0.7rem] font-bold text-ink uppercase tracking-wider mt-1">Departments</div>
+                <div className="font-display text-3xl sm:text-4xl font-bold text-marigold tabular-nums">
+                  <AnimatedNumber target={8} suffix="+" />
+                </div>
+                <div className="mono text-[0.7rem] font-bold text-ink uppercase tracking-wider mt-2">Departments</div>
                 <div className="text-[0.7rem] text-ink-soft mt-1">CSE, ECE, AIML, DS, Civil, BCA...</div>
-              </div>
-
-              <div className="group border border-line bg-paper p-5 rounded-2xl transition-all hover:border-marigold hover:shadow-lg">
-                <div className="text-2xl">⏱️</div>
-                <div className="mt-3 font-display text-3xl sm:text-4xl font-bold text-marigold tabular-nums">24h</div>
-                <div className="mono text-[0.7rem] font-bold text-ink uppercase tracking-wider mt-1">Non-Stop Hack</div>
-                <div className="text-[0.7rem] text-ink-soft mt-1">Mentoring &amp; live evaluation</div>
               </div>
             </div>
           </div>
-        </div>
-      </section>
-
-      {/* SHORTLISTED TEAMS SPOTLIGHT BANNER */}
-      <section className="px-5 py-12 sm:px-8">
-        <div className="mx-auto max-w-[1180px]">
-          <Reveal>
-            <div className="rounded-3xl border-2 border-emerald-600/40 bg-paper-2 p-8 sm:p-12 shadow-xl flex flex-wrap items-center justify-between gap-6">
-              <div className="space-y-2 max-w-xl">
-                <span className="mono text-xs font-bold text-emerald-600 uppercase tracking-wider">National Qualification Spotlight</span>
-                <h2 className="font-display text-2xl sm:text-4xl font-bold text-ink">
-                  50 Shortlisted Teams Advancing to SIH National Stage
-                </h2>
-                <p className="text-sm sm:text-base text-ink-soft leading-relaxed">
-                  Following rigorous Level 1 and Level 2 screening evaluations, 50 exceptional teams have been selected to represent NCET in the Smart India Hackathon 2026.
-                </p>
-              </div>
-
-              <Link
-                to="/problem-statements"
-                className="rounded-2xl bg-emerald-600 px-8 py-4 text-sm font-bold text-white shadow-lg hover:bg-emerald-700 transition-all cursor-pointer whitespace-nowrap"
-              >
-                View Selected 50 Teams 🏆 →
-              </Link>
-            </div>
-          </Reveal>
         </div>
       </section>
 
@@ -186,7 +149,7 @@ export function Landing() {
               {
                 k: '03',
                 title: 'Carrying NCET to the National Stage',
-                body: 'The 50 shortlisted teams carry NCET\'s legacy to the national finals of India\'s largest hackathon.',
+                body: 'The 50 teams selected carry NCET\'s legacy to the national finals of India\'s largest hackathon.',
               },
             ].map((item, i) => (
               <Reveal key={item.k} delay={i * 0.08}>
@@ -203,25 +166,20 @@ export function Landing() {
         </div>
       </section>
 
-      {/* FOOTER CTA SECTION */}
-      <section className="px-5 py-20 text-center sm:px-8 md:py-28 bg-paper-2 border-t border-line">
-        <div className="mx-auto max-w-[1180px]">
-          <Reveal>
-            <div className="eyebrow mb-4 flex justify-center text-marigold font-bold">Event Concluded</div>
-            <h2 className="mx-auto max-w-[18ch] text-[clamp(2rem,4.5vw,3.2rem)] font-bold text-ink">
+      {/* FOOTER CTA SECTION — EVENT CONCLUDED */}
+      <section className="px-5 py-20 sm:px-8 md:py-28 bg-paper-2 border-t border-line">
+        <div className="mx-auto max-w-3xl text-center">
+          <Reveal className="flex flex-col items-center justify-center text-center">
+            <div className="inline-flex items-center gap-2 rounded-full border border-marigold/30 bg-marigold/10 px-5 py-1.5 mono text-xs font-bold uppercase tracking-widest text-marigold mb-6">
+              <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
+              Event Concluded
+            </div>
+            <h2 className="text-3xl sm:text-5xl font-bold tracking-tight text-ink text-center max-w-xl mx-auto leading-tight">
               Congratulations to all participating teams!
             </h2>
-            <p className="mt-4 text-base text-ink-soft max-w-lg mx-auto">
-              Check out the 50 shortlisted teams, problem statement allocations, and photo highlights.
+            <p className="mt-5 text-base sm:text-lg text-ink-soft max-w-lg mx-auto text-center leading-relaxed">
+              Smart India Hackathon 2026 internal screening rounds at NCET have come to an inspiring finish. 50 teams selected to represent our college. Thank you to every student, mentor, and organizer who made this edition truly exceptional.
             </p>
-            <div className="mt-8 flex flex-wrap justify-center gap-4">
-              <LinkButton to="/problem-statements" variant="primary" className="px-8 py-4 text-sm font-bold shadow-lg">
-                View Shortlisted 50 Teams 🏆 →
-              </LinkButton>
-              <LinkButton to="/gallery" variant="ghost" className="px-8 py-4 text-sm font-bold border-line">
-                View Photo Gallery 📸
-              </LinkButton>
-            </div>
           </Reveal>
         </div>
       </section>

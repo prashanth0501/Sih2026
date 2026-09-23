@@ -128,7 +128,7 @@ export function Footer() {
             <span className="mono text-[0.65rem] sm:text-[0.75rem] text-marigold uppercase tracking-wider font-bold">
               Developed by
             </span>
-            <div className="inline-flex items-center justify-center gap-2 rounded-full border border-marigold/40 bg-marigold/10 px-4 py-1.5 text-xs sm:text-sm font-bold text-marigold shadow-[0_0_15px_rgba(245,158,11,0.15)] backdrop-blur-sm">
+            <div className="inline-flex items-center justify-center gap-2 rounded-full border border-marigold/40 bg-marigold/10 px-5 py-1.5 text-xs sm:text-sm font-bold text-marigold shadow-[0_0_15px_rgba(245,158,11,0.15)] backdrop-blur-sm">
               <a
                 href="https://www.linkedin.com/in/partha-shankar?utm_source=share_via&utm_content=profile&utm_medium=member_android"
                 target="_blank"
@@ -136,15 +136,6 @@ export function Footer() {
                 className="hover:underline hover:text-paper transition-colors"
               >
                 Partha Shankar
-              </a>
-              <span className="text-paper/40 font-mono text-xs">&amp;</span>
-              <a
-                href="https://www.linkedin.com/in/nirmith-m-jain-3126b027a?utm_source=share_via&utm_content=profile&utm_medium=member_android"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="hover:underline hover:text-paper transition-colors"
-              >
-                Nirmith M Jain
               </a>
             </div>
           </div>
